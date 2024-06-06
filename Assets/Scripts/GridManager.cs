@@ -63,7 +63,7 @@ public class GridManager : MonoBehaviour
     }
 
     public void Start() {
-        PlayModeStateChangedExample.OnEditMode = EnteredEditMode;
+        EnteredEditMode();
     }
 
     public void GenerateMap() {

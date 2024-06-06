@@ -1,14 +1,12 @@
-using JetBrains.Annotations;
-using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace Traffic
 {
-    [CustomEditor(typeof(TilemapWindow))]
+    [CustomEditor(typeof(TilemapEditor))]
     public class TilemapWindowEditor : Editor
     {
-        private TilemapWindow window = null;
+        private TilemapEditor window = null;
         private Tile m_HoveredTile = null;
 
         private bool m_ShowPointers = true;
@@ -25,7 +23,7 @@ namespace Traffic
 
         public override void OnInspectorGUI() {
             base.OnInspectorGUI();
-            window = (TilemapWindow)target;
+            window = (TilemapEditor)target;
 
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("Start Editing", GUILayout.Height(20), GUILayout.Width(100))) {
@@ -74,19 +72,22 @@ namespace Traffic
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal();
             for (int i = 0; i < window.GridManager.DecorativeLayers.Count; i++) {
-                if (GUILayout.Toggle(m_LayersToShow[i], new GUIContent("Layer " + i))) {
+                if (GUILayout.Toggle(m_LayersToShow[i], new GUIContent("Layer " + i))) {    
                 }
             }
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
-            m_CursorTileIndex = GUILayout.SelectionGrid(m_CursorTileIndex, window.Textures, 4);
+            if(window.Textures != null) {
+                m_CursorTileIndex = GUILayout.SelectionGrid(m_CursorTileIndex, window.Textures, 4);
+
+            }
             GUILayout.EndHorizontal();
+
             if(m_CursorTileIndex != m_CursorTileIndexOld) {
                 m_CursorTileIndexOld = m_CursorTileIndex;
                 window.SelectNewTileType(m_CursorTileIndex);
             }
-
 
             GUILayout.BeginHorizontal();
             if (window.SOTileList == null) {

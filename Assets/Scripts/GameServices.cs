@@ -25,7 +25,7 @@ public class GameServices : MonoBehaviour
 
     // Editor
     private TilemapEditorUtilities m_MapEditor = null;
-    public TilemapEditorUtilities MapEditor { get { return m_MapEditor; } } 
+    public TilemapEditorUtilities MapEditor { get { return m_MapEditor; } }
 
     private bool Initialized = false;
 

@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Traffic
 {
     [ExecuteInEditMode]
-    public class TilemapWindow : MonoBehaviour {
+    public class TilemapEditor : MonoBehaviour {
         [SerializeField]
         private RectTransform m_RectTransform = null;
         [SerializeField]
