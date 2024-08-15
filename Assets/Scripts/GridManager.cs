@@ -16,8 +16,6 @@ public class GridManager : MonoBehaviour
     private Transform m_TileContainer = null;
     [SerializeField]
     private Transform m_DecorativeTileContainer = null;
-    [SerializeField]
-    private Tile m_TilePrefab = null;
 
     [Header("Settings")]
     [SerializeField]
@@ -30,21 +28,23 @@ public class GridManager : MonoBehaviour
     private int m_Walls = 10;
 
     public Action<List<Tile>> OnMapGenerated = null;
-    public SOTile_List TileList { get { return m_TileList; } }
-    public SOTileSettings TileSettings { get { return m_TileSettings; } }
-    public Tile TilePrefab { get { return m_TilePrefab; } }
+
+    public DecorativeTileManager DecoTileManager { get; private set; } = null;
+    public GameplayTileManager GameplayTileManager { get; private set; } = null;
+    public TileRoad TileRoad { get; private set; } = null;
+    public TileGameplay TileGameplay { get; private set; } = null;
+    public TileDeco TileDeco { get; private set; } = null;
 
     public int TileSize { get => m_TileSize; }
     public int Rows { get => m_Rows; }
     public int Cols { get => m_Cols; }
+    public SOTile_List TileList { get { return m_TileList; } }
+    public SOTileSettings TileSettings { get { return m_TileSettings; } }
     public Transform TileContainer { get => m_TileContainer; }
+    public Transform DecorativeTileContainer { get => m_DecorativeTileContainer; }
 
     private List<int> m_CurrentWallIndexes = new List<int>();
     private int m_MaxTiles = -1;
-
-    public DecorativeTileManager DecoTileManager { get; private set; } = null;
-    public GameplayTileManager GameplayTileManager { get; private set; } = null;
-
     private GridData m_GridData = null;
 
     public class GridData
@@ -55,6 +55,9 @@ public class GridManager : MonoBehaviour
     }
 
     public void Start() {
+        TileRoad = TileList.RoadTile;
+        TileGameplay = TileList.GameplayTile;
+        TileDeco = TileList.DecoTile;
         EnteredEditMode();
     }
 
@@ -68,7 +71,7 @@ public class GridManager : MonoBehaviour
         int currentTile = 0;
         m_GridData = new GridData();
 
-        SO_Tile tileType = null;
+        SO_Tile tileData = null;
         int tileTypeIndex = 0;
 
         m_GridData.Tiles = new int[m_MaxTiles];
@@ -89,21 +92,20 @@ public class GridManager : MonoBehaviour
 
         for (int row = 0; row < Rows; row++) {
             for (int col = 0; col < Cols; col++) {
+                // TODO: Figure out how to choose tile type
+                tileTypeIndex = 0;
+                tileData = m_TileList.Tiles[tileTypeIndex];
+
                 if (currentTile < GameplayTileManager.TileCount) {
                     tile = GameplayTileManager.AllActiveTiles[currentTile];
                 }
                 else {
-                    tile = GameplayTileManager.GetNewTile(TileType.Road);
+                    tile = GameplayTileManager.GetNewTile(tileData.GetTileType());
                 }
 
-                // TODO: Figure out how to choose tile type
-                tileTypeIndex = 0;
-                tileType = m_TileList.Tiles[tileTypeIndex];
-
                 Vector2 pos = new Vector2(col * TileSize, row * TileSize);
-
                 tile.transform.localPosition = pos;
-                tile.Initialize(tileType, col, row);
+                tile.Initialize(tileData, col, row);
 
                 // May not need to be cleared
                 GameplayTileManager.ActiveTilesByLocation.Add(new Vector2(col, row), tile);
@@ -269,28 +271,11 @@ public class GridManager : MonoBehaviour
         DecoTileManager.DecoLayers[layerIndex].ToggleVisibility(show);
     }
 
-    public void DestroyAllTiles() {
-        foreach (DecorativeTileLayer layer in DecoTileManager.DecoLayers.Values) {
-            foreach (TileDeco tile in layer.TilesByLocation.Values) {
-                if (tile == null) {
-                    continue;
-                }
-                DestroyImmediate(tile.gameObject);
-            }
-        }
-        DecoTileManager.DecoLayers.Clear();
-    }
+
 
     public void EnteredEditMode() {
-        GameplayTileManager.AddTiles(TileContainer.GetComponentsInChildren<Tile>().ToList());
-
-        DecoTileManager.SetupDecorativeLayers(Rows);
-
-        var tiles = m_DecorativeTileContainer.GetComponentsInChildren<Tile>(true).ToList();
-        foreach (TileDeco tile in tiles) {
-            DecoTileManager.DecoLayers[tile.Layer].AddTile(tile); 
-        }
-
+        DecoTileManager = new DecorativeTileManager(Rows, TileDeco, DecorativeTileContainer);
+        GameplayTileManager = new GameplayTileManager(TileRoad, TileGameplay, TileContainer);
     }
 
 }

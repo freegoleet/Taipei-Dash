@@ -12,7 +12,6 @@ public class GameplayTileManager
     public List<Tile> AllActiveTiles { get; private set; } = new();
     public Dictionary<Vector2, Tile> ActiveTilesByLocation { get; private set; } = new();
 
-
     public Dictionary<TileType, List<Tile>> InactiveTiles { get; private set; } = new();
     public Dictionary<TileType, List<Tile>> AllTilesByType { get; private set; } = new();
     public Dictionary<TileType, List<Tile>> ActiveTiles { get; private set; } = new();
@@ -20,9 +19,37 @@ public class GameplayTileManager
 
     public int TileCount { get; private set; } = 0;
     public int ActiveTileCount { get; private set; } = 0;
+    public int InactiveTileCount { get; private set; } = 0;
+
+    public GameplayTileManager(TileRoad road, TileGameplay gameplay, Transform container) {
+        TilePrefabs.Add(TileType.Road, road);
+        TilePrefabs.Add(TileType.Gameplay, gameplay);
+        TileContainer = container;
+
+        InactiveTiles.Add(TileType.Road, new List<Tile>());
+        AllTilesByType.Add(TileType.Road, new List<Tile>());
+        ActiveTiles.Add(TileType.Road, new List<Tile>());
+
+        InactiveTiles.Add(TileType.Gameplay, new List<Tile>());
+        AllTilesByType.Add(TileType.Gameplay, new List<Tile>());
+        ActiveTiles.Add(TileType.Gameplay, new List<Tile>());
+
+        AddTiles(TileContainer.GetComponentsInChildren<Tile>().ToList());
+    }
 
     public void AddTiles(List<Tile> tiles) {
         AllTiles.AddRange(tiles);
+        foreach (var tile in AllTiles) {
+            if (tile.gameObject.activeSelf == true) {
+                ActiveTiles[tile.TileType].Add(tile);
+                AllActiveTiles.Add(tile);
+            }
+            else {
+                InactiveTiles[tile.TileType].Add(tile);
+            }
+
+            AllTilesByType[tile.TileType].Add(tile);
+        }
     }
 
     public void ReturnTile(Tile tile) {
@@ -30,6 +57,7 @@ public class GameplayTileManager
         ActiveTiles[tile.TileType].Remove(tile);
         InactiveTiles[tile.TileType].Add(tile);
         tile.gameObject.SetActive(false);
+        InactiveTileCount++;
     }
 
     public void ReturnTiles(List<Tile> tiles) {
@@ -49,12 +77,12 @@ public class GameplayTileManager
             }
 
             tile = list[0];
-
             tile.gameObject.SetActive(true);
             list.Remove(tile);
+            InactiveTileCount--;
         }
         else {
-            tile = Object.Instantiate(TilePrefabs[tileType], TileContainer);
+            tile = UnityEngine.Object.Instantiate(TilePrefabs[tileType].gameObject, TileContainer).GetComponent<Tile>();
             AllTilesByType[tileType].Add(tile);
             AllTiles.Add(tile);
             TileCount++;
@@ -71,13 +99,20 @@ public class GameplayTileManager
             if (tile == null) {
                 continue;
             }
-            Object.DestroyImmediate(tile.gameObject);
+            UnityEngine.Object.DestroyImmediate(tile.gameObject);
         }
 
         AllActiveTiles.Clear();
         AllTiles.Clear();
-        ActiveTiles.Clear();
-        InactiveTiles.Clear();
-        AllTilesByType.Clear();
+
+        InactiveTiles[TileType.Road].Clear();
+        AllTilesByType[TileType.Road].Clear();
+        ActiveTiles[TileType.Road].Clear();
+
+        InactiveTiles[TileType.Gameplay].Clear();
+        AllTilesByType[TileType.Gameplay].Clear();
+        ActiveTiles[TileType.Gameplay].Clear();
+
+        TileCount = 0;
     }
 }

@@ -1,3 +1,4 @@
+using Traffic;
 using UnityEngine;
 
 public abstract class SO_Tile : ScriptableObject
@@ -15,4 +16,7 @@ public abstract class SO_Tile : ScriptableObject
     private bool m_Rotatable = false;
     public bool Rotatable { get { return m_Rotatable; } }
 
+    public virtual TileType GetTileType() {
+        return TileType.None;
+    }
 }

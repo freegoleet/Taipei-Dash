@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd122fc47eef08644ba0590eef42dfa9, type: 3}
   m_Name: Tile List
   m_EditorClassIdentifier: 
-  m_GameplayTile: {fileID: 912872981625543565, guid: 6ca6d64a053601941a2cfd3bc83b7dbc, type: 3}
-  m_RoadTile: {fileID: 912872981625543565, guid: e87aa71c19eb0b94d82f13c7fff61bc5, type: 3}
-  m_DecoTile: {fileID: 912872981625543565, guid: 4729e7d6d3fdd034d9940b1aeedd4859, type: 3}
+  m_GameplayTile: {fileID: 8174427109390029976, guid: 6ca6d64a053601941a2cfd3bc83b7dbc, type: 3}
+  m_RoadTile: {fileID: 6665292008354273473, guid: e87aa71c19eb0b94d82f13c7fff61bc5, type: 3}
+  m_DecoTile: {fileID: 2545005862863080126, guid: 4729e7d6d3fdd034d9940b1aeedd4859, type: 3}
   m_Tiles:
   - {fileID: 11400000, guid: 5bfe05be929d414449c9ea9f8922b6d2, type: 2}
   - {fileID: 11400000, guid: cbcad56de67a0ad4aa2829f1dd5e4276, type: 2}

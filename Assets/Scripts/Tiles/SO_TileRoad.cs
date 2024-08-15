@@ -19,4 +19,8 @@ public class SO_TileRoad : SO_TileGameplay
     [SerializeField]
     private bool m_HasCrosswalk = false;
     public bool HasCrosswalk { get { return m_HasCrosswalk; } }
+
+    public override TileType GetTileType() {
+        return TileType.Road;
+    }
 }

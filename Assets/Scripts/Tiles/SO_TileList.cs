@@ -8,11 +8,11 @@ namespace Traffic
     {
         [Header("Prefabs")]
         [SerializeField]
-        private GameObject m_GameplayTile = null;
+        private TileGameplay m_GameplayTile = null;
         [SerializeField]
-        private GameObject m_RoadTile = null;
+        private TileRoad m_RoadTile = null;
         [SerializeField]
-        private GameObject m_DecoTile = null;
+        private TileDeco m_DecoTile = null;
 
         [Header("Lists")]
         [SerializeField]
@@ -26,9 +26,9 @@ namespace Traffic
         [SerializeField]
         private List<SO_RoadLine> m_Lines = new List<SO_RoadLine>();
 
-        public GameObject GameplayTile { get => m_GameplayTile; set => m_GameplayTile = value; }
-        public GameObject RoadTile { get => m_RoadTile; set => m_RoadTile = value; }
-        public GameObject DecoTile { get => m_DecoTile; set => m_DecoTile = value; }
+        public TileGameplay GameplayTile { get => m_GameplayTile; set => m_GameplayTile = value; }
+        public TileRoad RoadTile { get => m_RoadTile; set => m_RoadTile = value; }
+        public TileDeco DecoTile { get => m_DecoTile; set => m_DecoTile = value; }
 
         public List<SO_TileGameplay> Tiles { get { return m_Tiles; } }
         public List<SO_TileRoad> RoadTiles { get => m_RoadTiles; set => m_RoadTiles = value; }

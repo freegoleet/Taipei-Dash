@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -16,9 +17,14 @@ namespace Traffic
 
         public int TileCount { get; private set; } = 0;
 
-        public DecorativeTileManager(int layerCount) {
-            for (int i = 0; i < layerCount; i++) {
-                DecoLayers.Add(i, new DecorativeTileLayer(i));
+        public DecorativeTileManager(int layerCount, TileDeco tileDeco, Transform container) {
+            TilePrefab = tileDeco;
+            TileContainer = container;
+
+            SetupDecorativeLayers(layerCount);
+            var tiles = TileContainer.GetComponentsInChildren<TileDeco>(true).ToList();
+            foreach (TileDeco tile in tiles) {
+                DecoLayers[tile.Layer].AddTile(tile);
             }
         }
 
@@ -76,6 +82,25 @@ namespace Traffic
             DecoLayers[layer].RemoveTile(pos);
             InactiveTiles.Add(tile);
             tile.gameObject.SetActive(false);
+        }
+
+        public void DestroyAllTiles() {
+            foreach (DecorativeTileLayer layer in DecoLayers.Values) {
+                if(layer.TilesByLocation == null) {
+                    continue;
+                }
+                foreach (TileDeco tile in layer.TilesByLocation.Values) {
+                    if (tile == null) {
+                        continue;
+                    }
+                    Object.DestroyImmediate(tile.gameObject);
+                }
+            }
+
+            DecoLayers.Clear();
+            AllTiles.Clear();
+            ActiveTiles.Clear();
+            InactiveTiles.Clear();
         }
 
     }

@@ -13,7 +13,8 @@ public class GridManagerEditor : Editor
         }
 
         if (GUILayout.Button("Destroy Grid")) {
-            gm.DestroyAllTiles();
+            gm.GameplayTileManager.DestroyAllTiles();
+            gm.DecoTileManager.DestroyAllTiles();
         }
     }
 }
