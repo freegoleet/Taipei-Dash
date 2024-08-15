@@ -41,3 +41,15 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Gameplay
+    uniqueID: 586640283
+    locked: 0
+  - name: Deco
+    uniqueID: 1976147781
+    locked: 0
+  - name: Controls
+    uniqueID: 1329008423
+    locked: 0
+  - name: UI
+    uniqueID: 2073881731
+    locked: 0

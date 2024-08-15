@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Traffic;
-using UnityEditor;
 using UnityEngine;
 
 [ExecuteInEditMode]
@@ -29,8 +28,6 @@ public class GridManager : MonoBehaviour
     private int m_Cols = 10;
     [SerializeField]
     private int m_Walls = 10;
-    [SerializeField]
-    private int m_DecorativeLayerCount = 3;
 
     public Action<List<Tile>> OnMapGenerated = null;
     public SOTile_List TileList { get { return m_TileList; } }
@@ -41,17 +38,12 @@ public class GridManager : MonoBehaviour
     public int Rows { get => m_Rows; }
     public int Cols { get => m_Cols; }
     public Transform TileContainer { get => m_TileContainer; }
-    public Dictionary<int, List<Tile>> DecorativeLayers { get => m_DecorativeLayers; }
 
     private List<int> m_CurrentWallIndexes = new List<int>();
     private int m_MaxTiles = -1;
-    private List<Tile> m_AllTiles = new();
-    private List<Tile> m_ActiveTiles = new();
-    private Dictionary<Vector2, Tile> m_ActiveTilesLocation = new();
-    private List<Tile> m_InactiveTiles = new();
 
-    private Dictionary<int, List<Tile>> m_DecorativeLayers = new();
-    private Dictionary<(int, Vector2), Tile> m_DecorativeTilesLocation = new();
+    public DecorativeTileManager DecoTileManager { get; private set; } = null;
+    public GameplayTileManager GameplayTileManager { get; private set; } = null;
 
     private GridData m_GridData = null;
 
@@ -72,7 +64,7 @@ public class GridManager : MonoBehaviour
 
         m_MaxTiles = Rows * Cols;
         m_CurrentWallIndexes.Clear();
-        m_ActiveTilesLocation.Clear();
+        GameplayTileManager.ActiveTilesByLocation.Clear();
         int currentTile = 0;
         m_GridData = new GridData();
 
@@ -83,25 +75,25 @@ public class GridManager : MonoBehaviour
         m_GridData.Rows = Rows;
         m_GridData.Cols = Cols;
 
-        if (m_ActiveTiles.Count > m_MaxTiles) {
+        if (GameplayTileManager.TileCount > m_MaxTiles) {
             List<Tile> tilesToReturn = new();
 
-            for (int i = m_MaxTiles; i < m_ActiveTiles.Count; i++) {
-                tilesToReturn.Add(m_ActiveTiles[i]);
+            for (int i = m_MaxTiles; i < GameplayTileManager.TileCount; i++) {
+                tilesToReturn.Add(GameplayTileManager.AllActiveTiles[i]);
             }
 
             foreach (Tile t in tilesToReturn) {
-                ReturnTile(t);
+                GameplayTileManager.ReturnTile(t);
             }
         }
 
         for (int row = 0; row < Rows; row++) {
             for (int col = 0; col < Cols; col++) {
-                if (currentTile < m_ActiveTiles.Count) {
-                    tile = m_ActiveTiles[currentTile];
+                if (currentTile < GameplayTileManager.TileCount) {
+                    tile = GameplayTileManager.AllActiveTiles[currentTile];
                 }
                 else {
-                    tile = GetTile();
+                    tile = GameplayTileManager.GetNewTile(TileType.Road);
                 }
 
                 // TODO: Figure out how to choose tile type
@@ -114,7 +106,7 @@ public class GridManager : MonoBehaviour
                 tile.Initialize(tileType, col, row);
 
                 // May not need to be cleared
-                m_ActiveTilesLocation.Add(new Vector2(col, row), tile);
+                GameplayTileManager.ActiveTilesByLocation.Add(new Vector2(col, row), tile);
 
                 m_GridData.Tiles[currentTile] = tileTypeIndex;
 
@@ -122,6 +114,7 @@ public class GridManager : MonoBehaviour
             }
         }
 
+        #region othertiles
         // TODO: Figure out how to choose tile type
         //tileTypeIndex = 1;
         //tileType = m_TileList.Tiles[tileTypeIndex]; 
@@ -140,10 +133,10 @@ public class GridManager : MonoBehaviour
 
         //    m_CurrentWallIndexes.Add(index);
         //}
+        #endregion
 
-        SetupDecorativeLayers();
-
-        OnMapGenerated?.Invoke(m_ActiveTiles);
+        DecoTileManager.SetupDecorativeLayers(Rows);
+        OnMapGenerated?.Invoke(GameplayTileManager.AllActiveTiles);
     }
 
     public void GenerateMap(GridData networkGridData) {
@@ -155,11 +148,11 @@ public class GridManager : MonoBehaviour
         for (int row = 0; row < networkGridData.Rows; row++) {
             for (int col = 0; col < networkGridData.Cols; col++) {
 
-                if (currentTile < m_ActiveTiles.Count) {
-                    tile = m_ActiveTiles[currentTile];
+                if (currentTile < GameplayTileManager.TileCount) {
+                    tile = GameplayTileManager.AllActiveTiles[currentTile];
                 }
                 else {
-                    tile = GetTile();
+                    tile = GameplayTileManager.GetNewTile(TileType.Gameplay);
                 }
 
                 tile.gameObject.name = "x: " + col + " y: " + row;
@@ -172,91 +165,49 @@ public class GridManager : MonoBehaviour
 
                 // May not need to be cleared
                 Vector2 loc = new Vector2(col, row);
-                if (m_ActiveTilesLocation.ContainsKey(loc) == false) {
-                    m_ActiveTilesLocation.Add(loc, tile);
+                if (GameplayTileManager.ActiveTilesByLocation.ContainsKey(loc) == false) {
+                    GameplayTileManager.ActiveTilesByLocation.Add(loc, tile);
                 }
             }
         }
 
-        OnMapGenerated?.Invoke(m_ActiveTiles);
-    }
-
-    public void SetupDecorativeLayers() {
-        for (int i = 0; i < m_DecorativeLayerCount; i++) {
-            if (DecorativeLayers[i] != null) {
-                continue;
-            }
-            DecorativeLayers.Add(i, new());
-        }
-    }
-
-    private Tile GetTile() {
-        Tile tile = null;
-
-        if (m_InactiveTiles.Count > 0) {
-            tile = m_InactiveTiles[0];
-
-            tile.gameObject.SetActive(true);
-            m_InactiveTiles.Remove(tile);
-            m_ActiveTiles.Add(tile);
-
-            return tile;
-        }
-
-        tile = Instantiate(m_TilePrefab, TileContainer);
-        SceneVisibilityManager.instance.DisablePicking(tile.gameObject, true);
-
-        m_AllTiles.Add(tile);
-        m_ActiveTiles.Add(tile);
-
-        return tile;
+        OnMapGenerated?.Invoke(GameplayTileManager.AllActiveTiles);
     }
 
     public Tile GetActiveTileAtLocation(Vector2 location) {
-        return m_ActiveTilesLocation[location];
+        return GameplayTileManager.ActiveTilesByLocation[location];
     }
 
-    public Tile GetDecorativeTileAtLocation(int layer, Vector2 location) {
-        return m_DecorativeTilesLocation[(layer, location)];
-    }
-
-    private void ReturnTile(Tile tile) {
-        tile.Entity = null;
-        m_ActiveTiles.Remove(tile);
-        m_InactiveTiles.Add(tile);
-        tile.gameObject.SetActive(false);
-    }
-
-    private void ReturnDecorativeTile(int layer, Tile tile) {
-        tile.Entity = null;
-        DecorativeLayers[layer].Remove(tile);
-        m_InactiveTiles.Add(tile);
-        tile.gameObject.SetActive(false);
+    public TileDeco GetDecorativeTileAtLocation(int layer, Vector2 position) {
+        if (DecoTileManager.DecoLayers.ContainsKey(layer) == true) {
+            return DecoTileManager.DecoLayers[layer].GetTile(position);
+        }
+        return null;
     }
 
     public List<NodeBase> GetNeighbors(Tile node) {
         List<NodeBase> neighbors = new List<NodeBase>();
+        var tiles = GameplayTileManager.AllTiles;
+        int index = tiles.IndexOf(node) + 1;
 
-        int index = m_ActiveTiles.IndexOf(node) + 1;
-
-        if (index + Cols <= m_ActiveTiles.Count) // Up
+        if (index + Cols <= GameplayTileManager.TileCount) // Up
         {
-            neighbors.Add(m_ActiveTiles[index - 1 + Cols]);
+            neighbors.Add(tiles[index - 1 + Cols]);
         }
 
         if (index - Cols > 0) // Down
         {
-            neighbors.Add(m_ActiveTiles[index - 1 - Cols]);
+            neighbors.Add(tiles[index - 1 - Cols]);
         }
 
         if ((index - 1) % Cols != 0) // Left
         {
-            neighbors.Add(m_ActiveTiles[index - 2]);
+            neighbors.Add(tiles[index - 2]);
         }
 
         if ((index) % Cols != 0) // Right
         {
-            neighbors.Add(m_ActiveTiles[index]);
+            neighbors.Add(tiles[index]);
         }
 
         return neighbors;
@@ -270,69 +221,76 @@ public class GridManager : MonoBehaviour
         return new Vector2(to.Col - from.Col, to.Row - from.Row);
     }
 
-    public Tile GetTileClosestToPosition(Vector3 pos, int decLayer = -1) {
-        List<Tile> list = m_ActiveTiles;
+    public Tile GetTileClosestToPosition(Vector3 pos, int decoLayer = -1) {
+        IEnumerable<Tile> list = GameplayTileManager.AllActiveTiles;
 
-        if (decLayer != -1) {
-            list = DecorativeLayers[decLayer];
+        if (decoLayer != -1) {
+            list = DecoTileManager.DecoLayers[decoLayer].TilesByLocation.Values.ToList();
         }
 
-        Tile closest = list[0];
+        Tile closest = list.First();
         float currentMag = (closest.transform.position - pos).magnitude;
 
-        for (int i = 0; i < list.Count; i++) {
-            if (list[i].Entity != null) {
-                continue;
-            }
-
-            float nextTileMag = (list[i].transform.position - pos).magnitude;
+        foreach (Tile tile in list) {
+            float nextTileMag = (tile.transform.position - pos).magnitude;
             if (nextTileMag < currentMag) {
-                closest = list[i];
+                closest = tile;
                 currentMag = nextTileMag;
             }
         }
+
+        //for (int i = 0; i < list.Count(); i++) {
+        //    if (list[i].Entity != null) {
+        //        continue;
+        //    }
+
+        //    float nextTileMag = (list[i].transform.position - pos).magnitude;
+        //    if (nextTileMag < currentMag) {
+        //        closest = list[i];
+        //        currentMag = nextTileMag;
+        //    }
+        //}
 
         return closest;
     }
 
     public List<Tile> GetActiveTiles() {
-        return m_ActiveTiles;
+        return GameplayTileManager.AllActiveTiles;
     }
 
     public void ToggleCoords(bool show) {
-        foreach (NodeBase node in m_ActiveTiles) {
+        foreach (NodeBase node in GameplayTileManager.AllActiveTiles) {
             Tile tile = node as Tile;
             tile.ToggleCoords(show);
         }
     }
 
-    public void DestroyAllTiles() {
-        foreach (Tile tile in m_ActiveTiles) {
-            if (tile == null) {
-                continue;
-            }
-            DestroyImmediate(tile.gameObject);
-        }
+    public void ToggleLayerVisibility(int layerIndex, bool show) {
+        DecoTileManager.DecoLayers[layerIndex].ToggleVisibility(show);
+    }
 
-        foreach (List<Tile> tiles in DecorativeLayers.Values) {
-            foreach (Tile tile in tiles) {
+    public void DestroyAllTiles() {
+        foreach (DecorativeTileLayer layer in DecoTileManager.DecoLayers.Values) {
+            foreach (TileDeco tile in layer.TilesByLocation.Values) {
                 if (tile == null) {
                     continue;
                 }
                 DestroyImmediate(tile.gameObject);
             }
         }
-
-        m_ActiveTiles.Clear();
-        m_AllTiles.Clear();
-        m_ActiveTilesLocation.Clear();
-        DecorativeLayers.Clear();
-        m_DecorativeTilesLocation.Clear();
+        DecoTileManager.DecoLayers.Clear();
     }
 
     public void EnteredEditMode() {
-        m_AllTiles = TileContainer.GetComponentsInChildren<Tile>().ToList();
-        m_ActiveTiles = m_AllTiles;
+        GameplayTileManager.AddTiles(TileContainer.GetComponentsInChildren<Tile>().ToList());
+
+        DecoTileManager.SetupDecorativeLayers(Rows);
+
+        var tiles = m_DecorativeTileContainer.GetComponentsInChildren<Tile>(true).ToList();
+        foreach (TileDeco tile in tiles) {
+            DecoTileManager.DecoLayers[tile.Layer].AddTile(tile); 
+        }
+
     }
 
 }

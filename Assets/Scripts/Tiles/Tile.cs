@@ -1,10 +1,10 @@
-using System.Collections.Generic;
 using TMPro;
 using Traffic;
 using UnityEngine;
 
 public class Tile : NodeBase
 {
+    [Header("Tile")]
     [SerializeField]
     private SpriteRenderer m_ImgTile = null;
     [SerializeField]
@@ -13,9 +13,8 @@ public class Tile : NodeBase
     private TextMeshPro m_TxtCoords = null;
     [SerializeField]
     private TextMeshPro m_TxtValue = null;
-    [Header("Road Tile")]
-    [SerializeField]
-    private SpriteRenderer m_Pointer = null;
+
+    public TileType TileType { get; private set; } = TileType.None;
 
     // Data
     private Entity m_Entity = null;
@@ -23,32 +22,16 @@ public class Tile : NodeBase
     
     public Directions[] DrivableDirections { get; set; } = null;
     public Directions TileRotation { get; private set; } = Directions.Up;
-    public List<Occupant> Occupants { get; set; } = new();
-    public SpriteRenderer ImgPointer { get => m_Pointer; }
-
-    // Pathfinding
-    [Header("AStar Values")]
-    [SerializeField]
-    private GameObject m_AStarValues = null;
-    [SerializeField]
-    private TextMeshProUGUI m_GCost = null;
-    [SerializeField]
-    private TextMeshProUGUI m_HCost = null;
-    [SerializeField]
-    private TextMeshProUGUI m_FCost = null;
 
     private SO_Tile m_Data = null;
-    public SO_Tile Data { get { return m_Data; } }
+    public SO_Tile Data { get { return m_Data; } protected set { m_Data = value; } }
 
     public SpriteRenderer ImgTile { get => m_ImgTile; }
 
     public override void Initialize<T>(T data, int col = -1, int row = -1) {
-        m_Data = data as SO_Tile;
-
-        ImgTile.sprite = m_Data.Sprite;
-        m_ImgHighlight.sprite = m_Data.Sprite;
-
-
+        Data = data as SO_Tile;
+        ImgTile.sprite = Data.Sprite;
+        
         if (col >= 0 && row >= 0) {
             m_Col = col;
             m_Row = row;
@@ -56,15 +39,12 @@ public class Tile : NodeBase
         }
 
         m_TxtCoords.text = gameObject.name;
-        ImgPointer.gameObject.SetActive(m_Data.Rotatable);
+
+
     }
 
     public void SetDirections(Directions[] directions) {
         DrivableDirections = directions;
-    }
-
-    public void AddOccupant(Occupant occupant) {
-        Occupants.Add(occupant);
     }
 
     public void SetDirection(Directions direction) {
@@ -86,15 +66,15 @@ public class Tile : NodeBase
         TileRotation = direction;
     }
 
-    public void TogglePointer(bool show) {
-        ImgPointer.gameObject.SetActive(show);
-    }
-
     public void ToggleHighlight(bool show, Color? color = null) {
         m_ImgHighlight.gameObject.SetActive(show);
         if (color != null) {
             m_ImgHighlight.color = (Color)color;
         }
+    }
+
+    public void SetData(SO_Tile data) {
+        Data = data;
     }
 
     public void SetValue(int value) {
@@ -107,26 +87,6 @@ public class Tile : NodeBase
 
     public void ToggleCoords(bool show) {
         m_TxtCoords.gameObject.SetActive(show);
-    }
-
-    public void SetAStarValues(float g, float h, float f) {
-        m_FCost.text = f.ToString();
-    }
-
-    public void ToggleAStarValues(bool show) {
-        m_AStarValues.gameObject.SetActive(show);
-    }
-
-    public override void SetG(float g) {
-        base.SetG(g);
-        m_GCost.text = g.ToString();
-        m_FCost.text = (G + H).ToString();
-    }
-
-    public override void SetH(float h) {
-        base.SetH(h);
-        m_HCost.text = h.ToString();
-        m_FCost.text = (G + H).ToString();
     }
 }
 

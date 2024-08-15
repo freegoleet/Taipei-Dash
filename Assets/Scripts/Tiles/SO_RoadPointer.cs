@@ -8,15 +8,15 @@ namespace Traffic
     public class SO_RoadPointer : ScriptableObject
     {
         [SerializeField]
-        private Texture2D m_Texture2D = null;
+        private Sprite m_Sprite = null;
         [SerializeField]
-        private Directions m_Direction = Directions.Up;
+        private List<Directions> m_Directions = new();
 
-        public Texture2D Texture2D { get => m_Texture2D; }
-        public Directions Direction { get => m_Direction; }
+        public Sprite Texture2D { get => m_Sprite; }
+        public List<Directions> Directions { get => m_Directions; }
 
-        public Dictionary<Directions, Texture2D> GetTexture() {
-            return new Dictionary<Directions, Texture2D>() { { Direction, m_Texture2D } };
+        public Dictionary<List<Directions>, Sprite> GetTexture() {
+            return new Dictionary<List<Directions>, Sprite>() { { Directions, m_Sprite } };
         }
     }
 }

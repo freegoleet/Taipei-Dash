@@ -12,8 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd122fc47eef08644ba0590eef42dfa9, type: 3}
   m_Name: Tile List
   m_EditorClassIdentifier: 
+  m_GameplayTile: {fileID: 912872981625543565, guid: 6ca6d64a053601941a2cfd3bc83b7dbc, type: 3}
+  m_RoadTile: {fileID: 912872981625543565, guid: e87aa71c19eb0b94d82f13c7fff61bc5, type: 3}
+  m_DecoTile: {fileID: 912872981625543565, guid: 4729e7d6d3fdd034d9940b1aeedd4859, type: 3}
   m_Tiles:
-  - {fileID: 11400000, guid: 859f5167d9e58d24aafd1de18692bd1e, type: 2}
-  - {fileID: 11400000, guid: 09c12ed4a58ac494c821846cfb895135, type: 2}
+  - {fileID: 11400000, guid: 5bfe05be929d414449c9ea9f8922b6d2, type: 2}
+  - {fileID: 11400000, guid: cbcad56de67a0ad4aa2829f1dd5e4276, type: 2}
+  m_RoadTiles: []
+  m_DecoTiles: []
   m_Pointers:
-  - {fileID: 11400000, guid: 85846017719053f44b01a679765927e0, type: 2}
+  - {fileID: 11400000, guid: b2f0f34111d800e4f99e1c14a5b93faa, type: 2}
+  - {fileID: 11400000, guid: a46576a45c391844fa1802a58bbff3a2, type: 2}
+  - {fileID: 11400000, guid: 09a7c06a53059d1458a24d8df9f875f1, type: 2}
+  m_Lines:
+  - {fileID: 11400000, guid: 7ff8759e215297b45a8f62365e3d8c6d, type: 2}
+  - {fileID: 11400000, guid: 2cd647d54e3d7c9498e9a503fa5fbbb9, type: 2}
+  - {fileID: 11400000, guid: ffecdac3ac8a049439b5a3342db1705b, type: 2}

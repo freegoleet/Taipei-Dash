@@ -73,10 +73,10 @@ public class TilemapEditorUtilities
 
         if (tileToReplace.Entity != null)
         {
-            if (m_CurrentTileData.Traversable.Equals(SO_Tile.eTraversable.Untraversable))
-            {
+            //if (m_CurrentTileData.Traversable.Equals(SO_Tile.eTraversable.Untraversable))
+            //{
                 //GameServices.Instance.EntityEditorUtilities.DeletePlayerEntity(tileToReplace);
-            }
+            //}
         }
 
         tileToReplace.Initialize(m_CurrentTileData);
