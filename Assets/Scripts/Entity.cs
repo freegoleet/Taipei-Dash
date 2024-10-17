@@ -1,4 +1,5 @@
 using TMPro;
+using Traffic;
 using UnityEngine;
 
 
@@ -7,7 +8,7 @@ public abstract class Entity : MonoBehaviour
     [SerializeField]
     protected SpriteRenderer m_SpriteRenderer = null;
     [SerializeField]
-    protected Tile m_Tile = null;
+    protected TileGameplay m_Tile = null;
     [SerializeField]
     protected TextMeshPro m_TxtEntityId = null;
 
@@ -16,7 +17,7 @@ public abstract class Entity : MonoBehaviour
     public ulong OwnerId { get; set; } = ulong.MaxValue;
 
     public int Hitpoints { get { return m_Hitpoints; } }
-    public Tile Tile { get { return m_Tile; } set { m_Tile = value; } }
+    public TileGameplay TileGameplay { get { return m_Tile; } set { m_Tile = value; } }
 
     public TextMeshPro TxtEntityId { get { return m_TxtEntityId; } }
 
@@ -24,15 +25,15 @@ public abstract class Entity : MonoBehaviour
 
     }
 
-    public void SetTile(Tile tile)
+    public void SetTile(TileGameplay tile)
     {
         if(tile == null)
         {
-            Tile = null;
+            TileGameplay = null;
             return;
         }
 
-        Tile = tile; 
-        Tile.Entity = this;
+        TileGameplay = tile; 
+        TileGameplay.Entity = this;
     }
 }

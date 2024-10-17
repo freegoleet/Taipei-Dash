@@ -139,10 +139,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c1e58178b3766c42b379715dec2a5b6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_ImgTile: {fileID: 5803817108706300739}
+  m_ImgBackground: {fileID: 5803817108706300739}
   m_ImgHighlight: {fileID: 646521537112171103}
   m_TxtCoords: {fileID: 0}
   m_TxtValue: {fileID: 0}
+  m_ImgFeature: {fileID: 1677176811163848110}
+  m_Offset: 0
   m_ImgPointer: {fileID: 5144052832545580307}
   m_ImgLineTop: {fileID: 4040432986574815143}
   m_ImgLineBot: {fileID: 7687045624340638444}

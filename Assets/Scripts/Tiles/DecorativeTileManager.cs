@@ -37,10 +37,10 @@ namespace Traffic
             }
         }
 
-        public TileDeco AddNewDecorativeTile(int layer, SO_Tile tileType, Vector2 position, int col, int row) {
+        public TileDeco AddNewDecorativeTile(int layer, SO_TileDecorative tileType, Vector2 position, Vector2Int gridPos) {
             TileDeco tile = GetNewTile();
             tile.SetLayer(layer);
-            tile.Initialize(tileType, col, row);
+            tile.Initialize(tileType, gridPos);
             tile.transform.position = position;
             DecoLayers[layer].AddTile(tile);
 
@@ -73,13 +73,19 @@ namespace Traffic
             return tile;
         }
 
-        public void ReturnDecoTile(Vector2 pos, int layer) {
+        public void ReturnTile(Vector2 pos, int layer) {
             TileDeco tile = DecoLayers[layer].GetTile(pos);
             if (tile == null) {
                 return;
             }
 
             DecoLayers[layer].RemoveTile(pos);
+            InactiveTiles.Add(tile);
+            tile.gameObject.SetActive(false);
+        }
+
+        public void ReturnTile(TileDeco tile, int layer) {
+            DecoLayers[layer].RemoveTile(tile.GridPosition);
             InactiveTiles.Add(tile);
             tile.gameObject.SetActive(false);
         }

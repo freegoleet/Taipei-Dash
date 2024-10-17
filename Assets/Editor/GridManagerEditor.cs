@@ -8,13 +8,16 @@ public class GridManagerEditor : Editor
         base.OnInspectorGUI();
         GridManager gm = (GridManager)target;
 
+        if (GUILayout.Button("Refresh")) {
+            gm.SetupManager();
+        }
+
         if (GUILayout.Button("Create Grid")) {
             gm.GenerateMap();
         }
 
         if (GUILayout.Button("Destroy Grid")) {
-            gm.GameplayTileManager.DestroyAllTiles();
-            gm.DecoTileManager.DestroyAllTiles();
+            gm.DestroyAllTiles();
         }
     }
 }

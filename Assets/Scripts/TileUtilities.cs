@@ -1,15 +1,12 @@
 using UnityEngine;
 
-public class TileUtilities
+public static class TileUtilities
 {
-    private TilemapService m_TilemapService = null;
-
-    public TileUtilities()
+    static TileUtilities()
     {
-        m_TilemapService = GameServices.Instance.TilemapService;
     }
 
-    public bool HoverTile(Tile hoveredTile)
+    public static bool HoverTile(TileGameplay hoveredTile)
     {
         if (hoveredTile == null)
         {
@@ -18,21 +15,18 @@ public class TileUtilities
 
         if (Input.GetMouseButtonDown(0))
         {
-            //if (m_PlayerEntity != null)
-            //{
-            //    m_PlayerEntity.gameObject.SetActive(true);
-            //    m_PlayerEntity.transform.position = m_HoverTile.transform.position;
-            //    m_StartTile = m_HoverTile;
-            //}
         }
 
-        if (hoveredTile == m_TilemapService.PreviousHoverTile)
+        if (hoveredTile == TilemapUtilities.PreviousHoverTile)
         {
             return false;
         }
 
-        m_TilemapService.PreviousHoverTile = hoveredTile;
+        TilemapUtilities.PreviousHoverTile = hoveredTile;
 
         return true;
     }
+
+    
+
 }

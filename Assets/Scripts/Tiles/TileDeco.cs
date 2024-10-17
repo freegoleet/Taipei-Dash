@@ -1,5 +1,4 @@
 using UnityEngine;
-using static UnityEditor.Experimental.GraphView.GraphView;
 
 namespace Traffic
 {
@@ -12,28 +11,30 @@ namespace Traffic
         public int Layer { get; set; } = -1;
         public SpriteRenderer Shadow { get => m_ImgShadow; set => m_ImgShadow = value; }
 
-        public override void Initialize<T>(T data, int col = -1, int row = -1) {
-            base.Initialize(data, col, row);
-            name = "Layer " + Layer + ". x: " + col + ". y: " + row;
+        public override void Initialize(SO_Tile data, Vector2Int gridPos, bool cursor = false) {
+            base.Initialize(data, gridPos, cursor);
+            if(cursor == false) {
+                name = "Layer " + Layer + ". x: " + Col + ". y: " + Row;
+            }
         }
 
         public void SetLayer(int layer) {
             Layer = layer;
         }
 
-        public void SetFacing(Directions direction) {
+        public void SetFacing(Direction direction) {
             switch (direction) {
-                case Directions.Up:
-                    ImgTile.transform.position.Set(0, 0, 0);
+                case Direction.Up:
+                    ImgBackground.transform.position.Set(0, 0, 0);
                     break;
-                case Directions.Right:
-                    ImgTile.transform.position.Set(0, 4, 0);
+                case Direction.Right:
+                    ImgBackground.transform.position.Set(0, 4, 0);
                     break;
-                case Directions.Down:
-                    ImgTile.transform.position.Set(4, 4, 0);
+                case Direction.Down:
+                    ImgBackground.transform.position.Set(4, 4, 0);
                     break;
-                case Directions.Left:
-                    ImgTile.transform.position.Set(4, 0, 0);
+                case Direction.Left:
+                    ImgBackground.transform.position.Set(4, 0, 0);
                     break;
             }
         }

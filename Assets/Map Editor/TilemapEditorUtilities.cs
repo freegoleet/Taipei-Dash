@@ -1,84 +1,83 @@
-using System;
-using UnityEngine;
+//using System;
+//using Traffic;
+//using UnityEngine;
 
-public class TilemapEditorUtilities
-{
-    private SO_Tile m_CurrentTileData = null;
-    private UI_Item_Button_Tile m_CurrentButton = null;
-    private TilemapService m_TilemapService = null;
+//public static class TilemapEditorUtilities
+//{
+//    private static SO_Tile m_CurrentTileData = null;
+//    private static UI_Item_Button_Tile m_CurrentButton = null;
 
-    public Action<UI_Item_Button_Tile> OnUITilePressed = null;
+//    public static Action<UI_Item_Button_Tile> OnUITilePressed = null;
 
-    public TilemapEditorUtilities()
-    {
-        m_TilemapService = GameServices.Instance.TilemapService;
-        OnUITilePressed = UITilePressed;
-    }
+//    static TilemapEditorUtilities()
+//    {
+//        OnUITilePressed = UITilePressed;
+//    }
 
-    public bool HoverTile(Tile hoveredTile)
-    {
-        if (hoveredTile == null)
-        {
-            return false;
-        }
+//    public static bool HoverTile(TileGameplay hoveredTile)
+//    {
+//        if (hoveredTile == null)
+//        {
+//            return false;
+//        }
 
-        if (Input.GetMouseButtonDown(0) == true)
-        {
-            if (hoveredTile == null)
-            {
-                return false;
-            }
+//        if (Input.GetMouseButtonDown(0) == true)
+//        {
+//            if (hoveredTile == null)
+//            {
+//                return false;
+//            }
 
-            if (m_CurrentTileData != null)
-            {
-                ReplaceTile(hoveredTile);
-                return true;
-            }
+//            if (m_CurrentTileData != null)
+//            {
+//                ReplaceTile(hoveredTile);
+//                return true;
+//            }
 
-            m_CurrentTileData = hoveredTile.Data;
-        }
+//            m_CurrentTileData = hoveredTile.Data;
+//        }
 
-        if (hoveredTile == m_TilemapService.PreviousHoverTile)
-        {
-            return false;
-        }
+//        if (hoveredTile == TilemapUtilities.PreviousHoverTile)
+//        {
+//            return false;
+//        }
 
-        m_TilemapService.PreviousHoverTile = hoveredTile;
+//        TilemapUtilities.PreviousHoverTile = hoveredTile;
 
-        return false;
-    }
+//        return false;
+//    }
 
-    private void UITilePressed(UI_Item_Button_Tile button)
-    {
-        if (m_CurrentButton != null)
-        {
-            m_CurrentButton.OnDeselect();
-        }
+//    private static void UITilePressed(UI_Item_Button_Tile button)
+//    {
+//        if (m_CurrentButton != null)
+//        {
+//            m_CurrentButton.OnDeselect();
+//        }
 
-        m_CurrentButton = button;
-        m_CurrentTileData = button.Data;
-    }
+//        m_CurrentButton = button;
+//        m_CurrentTileData = button.Data;
+//    }
 
-    private void ReplaceTile(Tile tileToReplace)
-    {
-        if (tileToReplace.Data == m_CurrentTileData)
-        {
-            return;
-        }
+//    private static void ReplaceTile(TileGameplay tileToReplace)
+//    {
+//        if (tileToReplace.Data == m_CurrentTileData)
+//        {
+//            return;
+//        }
 
-        if (tileToReplace.GetComponent<UI_Item_Button<SO_Tile>>() == true)
-        {
-            return;
-        }
+//        if (tileToReplace.GetComponent<UI_Item_Button<SO_Tile>>() == true)
+//        {
+//            return;
+//        }
 
-        if (tileToReplace.Entity != null)
-        {
-            //if (m_CurrentTileData.Traversable.Equals(SO_Tile.eTraversable.Untraversable))
-            //{
-                //GameServices.Instance.EntityEditorUtilities.DeletePlayerEntity(tileToReplace);
-            //}
-        }
+//        if (tileToReplace.Entity != null)
+//        {
+//            //if (m_CurrentTileData.Traversable.Equals(SO_Tile.eTraversable.Untraversable))
+//            //{
+//                //GameServices.Instance.EntityEditorUtilities.DeletePlayerEntity(tileToReplace);
+//            //}
+//        }
 
-        tileToReplace.Initialize(m_CurrentTileData);
-    }
-}
+//        tileToReplace.Initialize(m_CurrentTileData as SO_TileGameplay);
+//    }
+//}

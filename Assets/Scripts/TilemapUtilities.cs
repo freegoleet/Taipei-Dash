@@ -1,45 +1,66 @@
+using System;
+using System.Collections.Generic;
+using Traffic;
+using UnityEngine;
+
 public enum eTilemapMode
 {
     Pathfinding,
     LineOfSight
 }
 
-public class TilemapUtilities
+public static class TilemapUtilities
 {
-    private TilemapService m_TilemapService = null;
-    private eTilemapMode m_CurrentTilemapMode = eTilemapMode.Pathfinding;
+    public static List<Entity> EveryEntity { get; private set; } = new();
 
-    public TilemapUtilities()
+    // Mouse
+    public static GameObject TargetGO { get; set; } = null;
+    public static GameObject HoverGO { get; set; } = null;
+
+    // Tiles
+    public static TileGameplay CurrentHoverTile { get; set; } = null;
+    public static TileGameplay PreviousHoverTile { get; set; } = null;
+    public static TileGameplay StartTile { get; set; } = null;
+    public static TileGameplay TargetTile { get; set; } = null;
+
+    // Managers
+    public static GridManager GridManager { get; private set; } = null;
+
+    public static Action OnSetStartTile = null;
+
+    private static eTilemapMode m_CurrentTilemapMode = eTilemapMode.Pathfinding;
+
+
+    static TilemapUtilities()
     {
-        m_TilemapService = GameServices.Instance.TilemapService;
     }
 
-    public virtual bool HoverTile(Tile hoveredTile)
+    public static bool HoverTile(TileGameplay hoveredTile)
     {
         if (hoveredTile == null)
         {
             return false;
         }
 
-        if (m_TilemapService.HoverTile != hoveredTile)
+        if (CurrentHoverTile != hoveredTile)
         {
-            m_TilemapService.HoverTile = hoveredTile;
-            m_TilemapService.HoverGO.transform.position = m_TilemapService.HoverTile.transform.position;
+            CurrentHoverTile = hoveredTile;
+            HoverGO.transform.position = CurrentHoverTile.transform.position;
         }
 
-        if (hoveredTile == m_TilemapService.PreviousHoverTile)
+        if (hoveredTile == PreviousHoverTile)
         {
             return true;
         }
 
-        m_TilemapService.PreviousHoverTile = hoveredTile;
+        PreviousHoverTile = hoveredTile;
 
         HoverNewTile();
 
         return true;
     }
 
-    public void HoverNewTile()
+    public static void HoverNewTile()
     {
         switch (m_CurrentTilemapMode)
         {
@@ -48,5 +69,11 @@ public class TilemapUtilities
             case eTilemapMode.LineOfSight:
                 break;
         }
+    }
+
+    public static void InitializePrefabs() {
+        TargetGO.SetActive(false);
+
+        HoverGO.SetActive(true);
     }
 }

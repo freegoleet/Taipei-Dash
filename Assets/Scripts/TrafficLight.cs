@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace Traffic
 {
-    public class TrafficLight : Tile
+    public class TrafficLight : TileRoad
     {
         [SerializeField]
         private SO_TrafficLightData m_Data = null;

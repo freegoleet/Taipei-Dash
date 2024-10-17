@@ -10,9 +10,9 @@ namespace Traffic
         Player
     }
 
-    public enum Directions
+    public enum Direction
     {
-        Up, Right, Down, Left
+        Up, Right, Down, Left, None
     }
 
     public enum TrafficLightColor
@@ -24,34 +24,77 @@ namespace Traffic
 
     public static class TrafficLib
     {
-        public static Directions GetNextDirection(Directions currentDirection) {
-            int index = (int)currentDirection + 1;
-            if (index >= Enum.GetValues(typeof(Directions)).Length) {
-                index = 0;
-            }
+        public static (Direction, Direction) ReverseDirections((Direction, Direction) directions) {
+            (Direction, Direction) reversedDirections = directions;
 
-            return (Directions)index;
-        }
-
-        public static Texture2D AddWatermark(Texture2D background, Texture2D watermark, int startX, int startY) {
-            Texture2D newTex = new Texture2D(background.width, background.height, background.format, false);
-            for (int x = 0; x < background.width; x++) {
-                for (int y = 0; y < background.height; y++) {
-                    if (x >= startX && y >= startY && x < watermark.width && y < watermark.height) {
-                        Color bgColor = background.GetPixel(x, y);
-                        Color wmColor = watermark.GetPixel(x - startX, y - startY);
-
-                        Color final_color = Color.Lerp(bgColor, wmColor, wmColor.a / 1.0f);
-
-                        newTex.SetPixel(x, y, final_color);
-                    }
-                    else
-                        newTex.SetPixel(x, y, background.GetPixel(x, y));
+            for (int i = 0; i < 2; i++) {
+                Direction direction = Direction.None;
+                if (i == 0) {
+                    direction = directions.Item1;
+                }
+                else {
+                    direction = directions.Item2;
+                }
+                switch (direction) {
+                    case Direction.Up:
+                        direction = Direction.Down;
+                        break;
+                    case Direction.Down:
+                        direction = Direction.Up;
+                        break;
+                    case Direction.Right:
+                        direction = Direction.Left;
+                        break;
+                    case Direction.Left:
+                        direction = Direction.Right;
+                        break;
+                    case Direction.None:
+                        direction = Direction.None;
+                        break;
+                }
+                if (i == 0) {
+                    reversedDirections.Item1 = direction;
+                }
+                else {
+                    reversedDirections.Item2 = direction;
                 }
             }
 
-            newTex.Apply();
-            return newTex;
+            return reversedDirections;
+        }
+
+
+        /// <summary>
+        /// Get the next direction by rotating clockwise by 90 degrees. Up > Right > Down > Left.
+        /// </summary>
+        /// <param name="currentDirection"></param>
+        /// <returns></returns>
+        public static Direction GetNextDirection(Direction currentDirection) {
+            int index = (int)currentDirection + 1;
+            if (index >= Enum.GetValues(typeof(Direction)).Length) {
+                index = 0;
+            }
+
+            return (Direction)index;
+        }
+
+        public static Texture2D AddWatermark(Texture2D background, Texture2D watermark, int startPositionX, int startPositionY) {
+            //only read and rewrite the area of the watermark
+            for (int x = startPositionX; x < background.width; x++) {
+                for (int y = startPositionY; y < background.height; y++) {
+                    if (x - startPositionX < watermark.width && y - startPositionY < watermark.height) {
+                        var bgColor = background.GetPixel(x, y);
+                        var wmColor = watermark.GetPixel(x - startPositionX, y - startPositionY);
+
+                        var finalColor = Color.Lerp(bgColor, wmColor, wmColor.a / 1.0f);
+
+                        background.SetPixel(x, y, finalColor);
+                    }
+                }
+            }
+
+            background.Apply();
+            return background;
         }
 
         public static void RotateImage(Texture2D tex, float angleDegrees) {

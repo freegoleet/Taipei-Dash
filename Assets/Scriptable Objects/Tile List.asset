@@ -12,14 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bd122fc47eef08644ba0590eef42dfa9, type: 3}
   m_Name: Tile List
   m_EditorClassIdentifier: 
-  m_GameplayTile: {fileID: 8174427109390029976, guid: 6ca6d64a053601941a2cfd3bc83b7dbc, type: 3}
+  m_SidewalkTile: {fileID: -5544315621574236693, guid: aee29268dfd2373439a6f17277f88b6d, type: 3}
   m_RoadTile: {fileID: 6665292008354273473, guid: e87aa71c19eb0b94d82f13c7fff61bc5, type: 3}
   m_DecoTile: {fileID: 2545005862863080126, guid: 4729e7d6d3fdd034d9940b1aeedd4859, type: 3}
+  m_GameplayTile: {fileID: -3114724142990060617, guid: f1d0ede3583725c449589ec7ce9034e3, type: 3}
   m_Tiles:
-  - {fileID: 11400000, guid: 5bfe05be929d414449c9ea9f8922b6d2, type: 2}
+  - {fileID: 11400000, guid: 1519cd63f0373814f805c12a95b85048, type: 2}
+  - {fileID: 11400000, guid: ce891b37b6333184d93dab11e8aa1b85, type: 2}
+  - {fileID: 11400000, guid: db79842e66836a14eb7d96e496aead57, type: 2}
+  - {fileID: 11400000, guid: cab212db663f6af41915e4050bd5ebb8, type: 2}
   - {fileID: 11400000, guid: cbcad56de67a0ad4aa2829f1dd5e4276, type: 2}
-  m_RoadTiles: []
-  m_DecoTiles: []
+  m_DecoTiles:
+  - {fileID: 11400000, guid: 88f0f23348923a0418f4205b6822cd2d, type: 2}
+  - {fileID: 11400000, guid: 4587f83fc491875479d5ecbab4bb52ab, type: 2}
+  - {fileID: 11400000, guid: 3468d0c1bcca8d24c976d4f7c5020b1e, type: 2}
   m_Pointers:
   - {fileID: 11400000, guid: b2f0f34111d800e4f99e1c14a5b93faa, type: 2}
   - {fileID: 11400000, guid: a46576a45c391844fa1802a58bbff3a2, type: 2}

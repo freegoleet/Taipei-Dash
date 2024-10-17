@@ -1,8 +1,9 @@
+using System.Collections.Generic;
 using TMPro;
 using Traffic;
 using UnityEngine;
 
-public class TileRoad : Tile
+public class TileRoad : TileGameplay
 {
     [Header("Traffic Details")]
     [SerializeField]
@@ -34,11 +35,17 @@ public class TileRoad : Tile
     public SpriteRenderer ImgLineLeft { get => m_ImgLineLeft; }
     public SpriteRenderer ImgLineRight { get => m_ImgLineRight; }
 
-    //public SO_TileRoad Data { get; private set; }
+    public Direction[] DrivableDirections { get; set; } = null;
 
-    public override void Initialize<T>(T data, int col = -1, int row = -1) {
-        Data = data as SO_TileRoad;
-        base.Initialize(Data, col, row);
+    private Dictionary<Direction, Vector2Int> RoadBehind = new() {
+        { Direction.Up, new Vector2Int(0, -1) },
+        { Direction.Down, new Vector2Int(0, 1) },
+        { Direction.Left, new Vector2Int(1, 0) },
+        { Direction.Right, new Vector2Int(-1, 0) },
+    };
+
+    public override void Initialize(SO_Tile data, Vector2Int gridPos, bool cursor = false) {
+        base.Initialize(data, gridPos, cursor);
     }
 
     public void TogglePointer(bool show) {
@@ -70,6 +77,35 @@ public class TileRoad : Tile
         ImgLineRight.sprite = line.Sprite;
         ImgLineRight.color = line.Color;
     }
+
+    public override void SetFacing(Direction facing) {
+        base.SetFacing(facing);
+
+        switch (facing) {
+            case Direction.Up:
+                transform.localEulerAngles = new Vector3(0, 0, 0);
+                break;
+            case Direction.Right:
+                transform.localEulerAngles = new Vector3(0, 0, 270);
+                break;
+            case Direction.Down:
+                transform.localEulerAngles = new Vector3(0, 0, 180);
+                break;
+            case Direction.Left:
+                transform.localEulerAngles = new Vector3(0, 0, 90);
+                break;
+        }
+    }
+
+    public void FitRoad() {
+        // Check auto neighbors
+        List<Direction> neighbors = NeighborSystem.GetAllFittableAdjacentDirections();
+        foreach (Direction direction in neighbors) {
+            
+        }
+        // Do stuff depending on the results
+    }
+
 
     #region A-Star
     public void SetAStarValues(float g, float h, float f) {

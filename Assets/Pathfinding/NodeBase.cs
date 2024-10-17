@@ -17,11 +17,11 @@ public abstract class NodeBase : MonoBehaviour
     public int Row { get { return m_Row; } }
     public int Col { get { return m_Col; } }
 
-    public Vector2 Position { get { return new Vector2(m_Col, m_Row); } }
+    public Vector2Int GridPosition { get { return new Vector2Int(m_Col, m_Row); } }
 
     public void SetConnection(NodeBase nodeBase) => m_Connection = nodeBase;
     public virtual void SetG(float g) => G = g;
     public virtual void SetH(float h) => H = h;
 
-    public abstract void Initialize<T>(T data, int col = -1, int row = -1);
+    //public abstract void Initialize<T>(T data, int col = -1, int row = -1);
 }
