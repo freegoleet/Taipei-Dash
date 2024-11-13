@@ -1,13 +1,6 @@
 using Traffic;
 using UnityEngine;
 
-public enum LineType
-{
-    LaneSeparator,
-    DirectionSeparator,
-    Stop
-}
-
 [CreateAssetMenu(fileName = "TileRoad", menuName = "ScriptableObjects/Tiles/TileRoad", order = 1)]
 public class SO_TileRoad : SO_TileGameplay
 {

@@ -36,14 +36,21 @@ namespace Traffic
         public List<SO_RoadPointer> Pointers { get { return m_Pointers; } }
         public List<SO_RoadLine> Lines { get { return m_Lines; } }
 
-        public Dictionary<List<Direction>, SO_RoadPointer> GetPointers() {
-            Dictionary<List<Direction>, SO_RoadPointer> dict = new();
-
+        public Dictionary<HashSet<Direction>, SO_RoadPointer> GetPointers() {
+            Dictionary<HashSet<Direction>, SO_RoadPointer> pointers = new();
             foreach (var pointer in Pointers) {
-                dict.Add(pointer.Directions, pointer);
+                pointers.Add(pointer.Directions, pointer);
             }
 
-            return dict;
+            return pointers;
+        }
+
+        public SO_RoadPointer GetRoadPointer(HashSet<Direction> directions) {
+            if(directions.Contains(Direction.Up) == false) {
+                return GetPointers()[new() { Direction.Right }];
+            }
+
+            return GetPointers()[directions];
         }
 
         public Dictionary<LineType, SO_RoadLine> GetRoadlines() {

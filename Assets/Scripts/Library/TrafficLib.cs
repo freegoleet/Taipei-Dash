@@ -24,6 +24,20 @@ namespace Traffic
 
     public static class TrafficLib
     {
+        /// <summary>
+        /// Reverse the direction of the input Direction.
+        /// </summary>
+        /// <param name="directions">Direction</param>
+        /// <returns></returns>
+        public static Direction ReverseDirections(Direction direction) {
+            return ReverseDirections((direction, Direction.None)).Item1;
+        }
+
+        /// <summary>
+        /// Reverse the directions of both input Directions.
+        /// </summary>
+        /// <param name="directions">(Direction, Direction)</param>
+        /// <returns></returns>
         public static (Direction, Direction) ReverseDirections((Direction, Direction) directions) {
             (Direction, Direction) reversedDirections = directions;
 
@@ -63,6 +77,20 @@ namespace Traffic
             return reversedDirections;
         }
 
+        public static Direction[] GetFlankDirections(Direction direction) {
+            switch (direction) {
+                case Direction.Up:
+                    return new Direction[] { Direction.Left, Direction.Right };
+                case Direction.Right:
+                    return new Direction[] { Direction.Up, Direction.Down };
+                case Direction.Down:
+                    return new Direction[] { Direction.Right, Direction.Left };
+                case Direction.Left:
+                    return new Direction[] { Direction.Down, Direction.Up };
+            }
+            return null;
+        }
+
 
         /// <summary>
         /// Get the next direction by rotating clockwise by 90 degrees. Up > Right > Down > Left.
@@ -71,11 +99,114 @@ namespace Traffic
         /// <returns></returns>
         public static Direction GetNextDirection(Direction currentDirection) {
             int index = (int)currentDirection + 1;
-            if (index >= Enum.GetValues(typeof(Direction)).Length) {
+            if (index >= Enum.GetValues(typeof(Direction)).Length - 1) {
                 index = 0;
             }
 
             return (Direction)index;
+        }
+
+        public static Direction NormalizeRotation(Direction from, Direction to) {
+            if(from == to) {
+                return Direction.None;
+            }
+            if (ReverseDirections(from) == to) {
+                return Direction.Up;
+            }
+
+            int index = from - to;
+            switch (index) {
+                case 1:
+                    return Direction.Right;
+                case -1:
+                    return Direction.Left;
+                case 3:
+                    return Direction.Left;
+                case -3:
+                    return Direction.Right;
+            }
+
+            return Direction.None;
+        }
+
+        public static Direction RelativeRotation(Direction from, Direction to) {
+            if (to == Direction.Up) {
+                return from;
+            }
+            if (to == Direction.Down)
+            {
+                return ReverseDirections(from);
+            }
+
+            switch (from) {
+                case Direction.Up:
+                    if(to == Direction.Left) {
+                        return Direction.Left;
+                    }
+                    return Direction.Right;
+                case Direction.Right:
+                    if (to == Direction.Left) {
+                        return Direction.Up;
+                    }
+                    return Direction.Down;
+                case Direction.Down:
+                    if (to == Direction.Left) {
+                        return Direction.Right;
+                    }
+                    return Direction.Left;
+                case Direction.Left:
+                    if (to == Direction.Left) {
+                        return Direction.Down;
+                    }
+                    return Direction.Up;
+            }
+
+            return Direction.None;
+        }
+
+
+        public static bool IsDirectionAdjacent(Direction start, Direction target) {
+            int index = start - target;
+            switch (index) {
+                case 1:
+                    return true;
+                case -1:
+                    return true;
+                case 3:
+                    return true;
+                case -3:
+                    return true;
+            }
+            return false;
+        }
+
+        public static Direction[] GetAdjacentDirections(Direction start, Direction target) {
+            Direction[] directions = new Direction[2];
+            int arrayIndex = 0;
+            int enumIndex = start - target;
+            switch (enumIndex) {
+                case 0:
+                    directions[arrayIndex] = start;
+                    arrayIndex++;
+                    break;
+                case 1:
+                    directions[arrayIndex] = Direction.Right;
+                    arrayIndex++;
+                    break;
+                case -1:
+                    directions[arrayIndex] = Direction.Left;
+                    arrayIndex++;
+                    break;
+                case 3:
+                    directions[arrayIndex] = Direction.Left;
+                    arrayIndex++;
+                    break;
+                case -3:
+                    directions[arrayIndex] = Direction.Right;
+                    arrayIndex++;
+                    break;
+            }
+            return directions;
         }
 
         public static Texture2D AddWatermark(Texture2D background, Texture2D watermark, int startPositionX, int startPositionY) {

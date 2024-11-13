@@ -47,6 +47,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_GridManager: {fileID: 0}
   m_TilemapCursor: {fileID: 3287074142246468256}
+  m_Neighbors: {fileID: 0}
   Directions: 03000000010000000000000002000000
 --- !u!1 &3920825423870431207
 GameObject:
@@ -102,6 +103,7 @@ MonoBehaviour:
   m_DecoTile: {fileID: 779288190997470877}
   m_GameplayTile: {fileID: 2083219279105711902}
   m_Cursor: {fileID: 3042141901782464874}
+  HoveredTileGridIndex: {x: 0, y: 0}
 --- !u!1001 &1038008441821486998
 PrefabInstance:
   m_ObjectHideFlags: 0

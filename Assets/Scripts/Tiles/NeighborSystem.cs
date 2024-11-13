@@ -5,6 +5,12 @@ namespace Traffic
 {
     public class NeighborSystem
     {
+        public Tile Tile { get; private set; }
+
+        public NeighborSystem(Tile tile) {
+            Tile = tile;    
+        }
+
         public Dictionary<(Direction, Direction), Neighbor> Neighbors { get; private set; } = new() {
             { (Direction.Up, Direction.None), new Neighbor(new Vector2Int(0, 1), null) },
             { (Direction.Down, Direction.None), new Neighbor(new Vector2Int(0, -1), null) },
@@ -20,6 +26,28 @@ namespace Traffic
             List<Vector2Int> list = new();
             foreach (Neighbor neighbor in Neighbors.Values) {
                 if (neighbor.Tile == null) {
+                    continue;
+                }
+                list.Add(neighbor.RelativeGridPos);
+            }
+            return list;
+        }
+
+        public List<Vector2Int> GetAllFittableNeighbors() {
+            List<Vector2Int> list = new();
+            foreach (Neighbor neighbor in Neighbors.Values) {
+                if (neighbor.Fittable == false) {
+                    continue;
+                }
+                list.Add(neighbor.RelativeGridPos);
+            }
+            return list;
+        }
+
+        public List<Vector2Int> GetAllUnfittableNeighbors() {
+            List<Vector2Int> list = new();
+            foreach (Neighbor neighbor in Neighbors.Values) {
+                if (neighbor.Fittable == true) {
                     continue;
                 }
                 list.Add(neighbor.RelativeGridPos);
@@ -45,7 +73,7 @@ namespace Traffic
                     continue;
                 }
                 if (kvp.Value.Fittable == true) {
-                    return kvp.Key.Item1;
+                    return TrafficLib.ReverseDirections(kvp.Key).Item1;
                 }
             }
             return default;
@@ -78,22 +106,26 @@ namespace Traffic
         }
 
         public Direction GetCornerDirection() {
-            foreach (KeyValuePair<(Direction, Direction), Neighbor> kvp in Neighbors) {
-                if (kvp.Key.Item2 == Direction.None) {
+            (Direction, Direction) emptyDirs = (Direction.None, Direction.None);
+            foreach (Direction dir in GetAllUnfittableAdjacentDirections()) {
+                if (emptyDirs.Item1 == Direction.None) {
+                    emptyDirs.Item1 = dir;
                     continue;
                 }
-                switch (kvp.Key) {
-                    case (Direction.Up, Direction.Left):
-                        return Direction.Up;
-                    case (Direction.Up, Direction.Right):
-                        return Direction.Right;
-                    case (Direction.Down, Direction.Left):
-                        return Direction.Down;
-                    case (Direction.Down, Direction.Right):
-                        return Direction.Left;
-                    default:
-                        break;
-                }
+                emptyDirs.Item2 = dir;
+                break;
+            }
+            switch (emptyDirs) {
+                case (Direction.Up, Direction.Left):
+                    return Direction.Left;
+                case (Direction.Up, Direction.Right):
+                    return Direction.Up;
+                case (Direction.Down, Direction.Left):
+                    return Direction.Down;
+                case (Direction.Down, Direction.Right):
+                    return Direction.Right;
+                default:
+                    break;
             }
             return Direction.None;
         }
@@ -154,9 +186,9 @@ namespace Traffic
 
     public class Neighbor
     {
-        public Vector2Int RelativeGridPos { get; set; }
-        public Tile Tile { get; set; }
-        public bool Fittable { get; set; }
+        public Vector2Int RelativeGridPos { get; set; } = new Vector2Int();
+        public Tile Tile { get; set; } = null;
+        public bool Fittable { get; set; } = false;
 
         public Neighbor(Vector2Int relativeGridPos, Tile tile) {
             RelativeGridPos = relativeGridPos;

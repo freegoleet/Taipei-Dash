@@ -223,30 +223,25 @@ public class TileSidewalk : TileAutofit
                 }
                 switch (unfitDiagonals) {
                     case (Direction.Up, Direction.Left):
-                        Curbs[numberOfCurbs].sprite = SidewalkData.CurbInnerCorner;
                         Curbs[numberOfCurbs].transform.localEulerAngles = new Vector3(0f, 0f, 90f);
-                        Masks[numberOfCurbs].transform.localPosition = new Vector3(15f, 15f, 0f);
                         Masks[numberOfCurbs].parent.transform.localEulerAngles = new Vector3(0, 0, 90f);
                         break;
                     case (Direction.Up, Direction.Right):
-                        Curbs[numberOfCurbs].sprite = SidewalkData.CurbInnerCorner;
                         Curbs[numberOfCurbs].transform.localEulerAngles = new Vector3(0f, 0f, 0f);
-                        Masks[numberOfCurbs].transform.localPosition = new Vector3(15f, 15f, 0f);
                         Masks[numberOfCurbs].parent.transform.localEulerAngles = new Vector3(0, 0, 0f);
                         break;
                     case (Direction.Down, Direction.Left):
-                        Curbs[numberOfCurbs].sprite = SidewalkData.CurbInnerCorner;
                         Curbs[numberOfCurbs].transform.localEulerAngles = new Vector3(0f, 0f, 180f);
-                        Masks[numberOfCurbs].transform.localPosition = new Vector3(15f, 15f, 0f);
                         Masks[numberOfCurbs].parent.transform.localEulerAngles = new Vector3(0, 0, 180f);
                         break;
                     case (Direction.Down, Direction.Right):
-                        Curbs[numberOfCurbs].sprite = SidewalkData.CurbInnerCorner;
                         Curbs[numberOfCurbs].transform.localEulerAngles = new Vector3(0f, 0f, 270f);
-                        Masks[numberOfCurbs].transform.localPosition = new Vector3(15f, 15f, 0f);
                         Masks[numberOfCurbs].parent.transform.localEulerAngles = new Vector3(0, 0, 270f);
                         break;
                 }
+
+                Curbs[numberOfCurbs].sprite = SidewalkData.CurbInnerCorner;
+                Masks[numberOfCurbs].transform.localPosition = new Vector3(15f, 15f, 0f);
 
                 Masks[numberOfCurbs].transform.localScale = new Vector3(0.25f, 0.25f, 0f);
                 numberOfCurbs++;

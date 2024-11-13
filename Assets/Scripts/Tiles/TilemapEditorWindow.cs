@@ -1,3 +1,4 @@
+using System;
 using Traffic;
 using UnityEditor;
 using UnityEngine;
@@ -12,8 +13,10 @@ public class TilemapEditorWindow : EditorWindow
 
     private bool m_IsEditing = false;
     private bool m_IsEditingOld = false;
-    private bool m_ShowPointers = false;
-    private bool m_ShowPointersOld = false;
+    private bool m_ShowConnections = false;
+    private bool m_ShowConnectionsOld = false;
+    private bool m_ModifyTiles = false;
+    private bool m_ModifyTilesOld = false;
 
     private bool[] m_DecorativeLayers = null;
     private bool[] m_DecorativeLayersLast = null;
@@ -21,6 +24,10 @@ public class TilemapEditorWindow : EditorWindow
     private int m_LayerToEdit = 0;
     private int m_LayerToEditOld = 1;
     private string[] m_LayerNames = null;
+
+    private int m_TileModType = 0;
+    private int m_TileModTypeOld = 1;
+    private string[] m_TileModTypes = null;
 
     private Vector2 m_ScrollPosition = Vector2.zero;
 
@@ -48,6 +55,11 @@ public class TilemapEditorWindow : EditorWindow
             m_LayerNames[i] = "Deco " + i;
         }
 
+        m_TileModTypes = new string[Enum.GetNames(typeof(TileModType)).Length];
+        for (int i = 0; i < m_TileModTypes.Length; i++) {
+            m_TileModTypes[i] = Enum.GetValues(typeof(TileModType)).GetValue(i).ToString();
+        }
+
         RefreshSystem();
 
         for (int i = 0; i < m_DecorativeLayers.Length; i++) {
@@ -56,9 +68,8 @@ public class TilemapEditorWindow : EditorWindow
             ToggleShowDecoLayer(i, true);
         }
 
-
         ToggleEditing(m_IsEditing);
-        Editor.ToggleShowPointers(m_ShowPointers);
+        Editor.ToggleShowConnections(m_ShowConnections);
     }
 
     private void OnGUI() {
@@ -71,30 +82,31 @@ public class TilemapEditorWindow : EditorWindow
 
         m_ScrollPosition = GUILayout.BeginScrollView(m_ScrollPosition, false, true);
 
+        TileModification();
         DecorativeLayers();
         LayerToEdit();
-        SetupTiles();
+        TileSelector();
 
         GUILayout.EndScrollView();
 
     }
 
     private void LayerToEdit() {
-        EditorGUILayout.LabelField("Layer to edit:");
-        EditorGUILayout.BeginHorizontal();
-        if (Editor.Textures != null) {
-            m_LayerToEdit = GUILayout.SelectionGrid(m_LayerToEdit, m_LayerNames, 4, GUILayout.Width(300));
+        //EditorGUILayout.LabelField("Layer to edit:");
+        //EditorGUILayout.BeginHorizontal();
+        //if (Editor.Textures != null) {
+        //    m_LayerToEdit = GUILayout.SelectionGrid(m_LayerToEdit, m_LayerNames, 4, GUILayout.Width(300));
 
-            if (m_LayerToEdit != m_LayerToEditOld) {
-                m_LayerToEditOld = m_LayerToEdit;
-                Editor.SelectLayerToEdit(m_LayerToEdit);
-                if (m_LayerToEdit > 0 && m_DecorativeLayers[m_LayerToEdit - 1] == false) {
-                    ToggleShowDecoLayer(m_LayerToEdit - 1, true);
-                }
-            }
-        }
-        EditorGUILayout.EndHorizontal();
-        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        //    if (m_LayerToEdit != m_LayerToEditOld) {
+        //        m_LayerToEditOld = m_LayerToEdit;
+        //        Editor.SelectLayerToEdit(m_LayerToEdit);
+        //        if (m_LayerToEdit > 0 && m_DecorativeLayers[m_LayerToEdit - 1] == false) {
+        //            ToggleShowDecoLayer(m_LayerToEdit - 1, true);
+        //        }
+        //    }
+        //}
+        //EditorGUILayout.EndHorizontal();
+        //EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
     }
 
     private void Controls() {
@@ -104,19 +116,41 @@ public class TilemapEditorWindow : EditorWindow
             RefreshSystem();
         }
 
+        if (GUILayout.Button("Create Grid", GUILayout.Width(100))) {
+            Editor.GridManager.GenerateMap();
+        }
+        EditorGUILayout.EndHorizontal();
+
+        EditorGUILayout.BeginHorizontal();
         m_IsEditing = GUILayout.Toggle(m_IsEditing, "Toggle Editing", GUILayout.Width(100));
         if (m_IsEditing != m_IsEditingOld) {
             m_IsEditingOld = m_IsEditing;
             ToggleEditing(m_IsEditing);
         }
 
-        m_ShowPointers = GUILayout.Toggle(m_ShowPointers, "Show Pointers", GUILayout.Width(100));
-        if (m_ShowPointers != m_ShowPointersOld) {
-            m_ShowPointersOld = m_ShowPointers;
-            Editor.ToggleShowPointers(m_ShowPointers);
+        m_ShowConnections = GUILayout.Toggle(m_ShowConnections, "Show Connections", GUILayout.Width(140));
+        if (m_ShowConnections != m_ShowConnectionsOld) {
+            m_ShowConnectionsOld = m_ShowConnections;
+            Editor.ToggleShowConnections(m_ShowConnections);
         }
+
         EditorGUILayout.EndHorizontal();
 
+        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+    }
+
+    private void TileModification() {
+        EditorGUILayout.LabelField("Tile Modification:");
+        EditorGUILayout.BeginHorizontal();
+        if (Editor.Textures != null) {
+            m_TileModType = GUILayout.SelectionGrid(m_TileModType, m_TileModTypes, 4, GUILayout.Width(300));
+            if (m_TileModType != m_TileModTypeOld) {
+                m_TileModTypeOld = m_TileModType;
+                Editor.SwitchTileModType((TileModType)m_TileModTypeOld);
+            }
+        }
+
+        EditorGUILayout.EndHorizontal();
         EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
     }
 
@@ -143,12 +177,12 @@ public class TilemapEditorWindow : EditorWindow
         Editor.ShowLayer(layer, show);
     }
 
-    public void SetupTiles() {
+    public void TileSelector() {
         if (Editor == null) {
             Editor = FindFirstObjectByType<TilemapEditor>();
         }
 
-        EditorGUILayout.LabelField("TileGameplay to use:");
+        EditorGUILayout.LabelField("Tile to use:");
 
         EditorGUILayout.BeginHorizontal();
         if (Editor.Textures != null) {
@@ -165,6 +199,10 @@ public class TilemapEditorWindow : EditorWindow
         Editor.Refresh();
     }
 
+    public void ToggleModifyTiles(bool show) {
+        Editor.TilemapCursor.ToggleShowCursorTile(!show);
+    }
+
     public void ToggleEditing(bool editing) {
         if (editing == true) {
             SceneView.duringSceneGui += OnSceneMouseOver;
@@ -172,9 +210,8 @@ public class TilemapEditorWindow : EditorWindow
         else {
             SceneView.duringSceneGui -= OnSceneMouseOver;
         }
-
         Editor.TilemapCursor.ToggleShowCursorTile(editing);
-        //m_HoveredTile.ToggleHighlight(editing);
+        Editor.TilemapCursor.ToggleShowCursor(editing);
     }
 
     private void OnSceneMouseOver(SceneView view) {
@@ -183,37 +220,43 @@ public class TilemapEditorWindow : EditorWindow
             NodeBase nodebase = Editor.GridManager.GetTileClosestToPosition(pos);
             Tile tile = (Tile)nodebase;
 
-            if(m_HoveredTile == null) {
+            if (m_HoveredTile == null) {
                 m_HoveredTile = tile;
             }
 
             if (m_HoveredTile.GridPosition != nodebase.GridPosition) {
                 m_HoveredTile = tile;
                 Editor.TilemapCursor.UpdateCursorPos(tile);
-                if(tile is TileAutofit aftile) {
-                    Editor.UI_Neighbors.ShowNeighbors(aftile.NeighborSystem.GetAllNeighbors());
+
+                if(Editor.TilemapCursor.GetCurrentCursorTile() is Tile cursorTile == false) {
+                    return;
+                }
+                if (tile.Data == cursorTile) {
+                    Editor.UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllFittableNeighbors());
+                }
+                else {
+                    Editor.UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllUnfittableNeighbors());
                 }
             }
         }
 
         if (Event.current.type == EventType.MouseDown) {
             if (Event.current.keyCode == KeyCode.Mouse0) {
-                Editor.PlaceTile(m_HoveredTile);
+                Editor.EditTile(m_HoveredTile, true);
             }
 
             if (Event.current.keyCode == KeyCode.Mouse1) {
-                Editor.RemoveTile(m_HoveredTile);
+                Editor.EditTile(m_HoveredTile, false);
             }
         }
 
         if (Event.current.type == EventType.KeyDown) {
+            Tile tile = Editor.TilemapCursor.GetCurrentCursorTile();
             if (Event.current.keyCode == KeyCode.R) {
-                Tile tile = Editor.TilemapCursor.GetCursorTile();
                 if (tile.Data.Rotatable == true) {
                     tile.SetFacing(TrafficLib.GetNextDirection(tile.Facing));
                 }
             }
         }
-
     }
 }

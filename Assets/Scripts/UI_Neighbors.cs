@@ -36,14 +36,13 @@ public class UI_Neighbors : MonoBehaviour
         };
     }
 
-
     public void ShowNeighbors(List<Vector2Int> directions) {
-        foreach (KeyValuePair<Vector2Int, RawImage> kvp in m_Images) {
-            if(directions.Contains(kvp.Key)) {
-                m_Images[kvp.Key].color = Color.green;
+        foreach (KeyValuePair<Vector2Int, RawImage> images in m_Images) {
+            if(directions.Contains(images.Key)) {
+                m_Images[images.Key].color = Color.green;
                 continue;
             }
-            m_Images[kvp.Key].color = Color.red;
+            m_Images[images.Key].color = Color.red;
             continue;
         }
     }

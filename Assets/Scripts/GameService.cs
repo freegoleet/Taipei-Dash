@@ -34,6 +34,6 @@ public class GameService : MonoBehaviour
             return;
         }
 
-        EntityManager.Tick(Time.deltaTime);
+        //EntityManager.Tick(Time.deltaTime);
     }
 }

@@ -124,7 +124,7 @@ public class GridManager : MonoBehaviour
         //}
 
         for (int i = 0; i < TileManager.GameplayTilecount; i++) {
-            TileManager.SetupAutofit(TileManager.GetAllGameplayTiles()[i], false);
+            TileManager.SetupTileNeighbors(TileManager.GetAllGameplayTiles()[i], false);
         }
 
         #region othertiles
@@ -153,7 +153,7 @@ public class GridManager : MonoBehaviour
     }
 
     public void SetNeighbors(Tile tile, bool setNeighborsNewNeighbor = false) {
-        NodeBase[] neighbors = GetNeighbors(tile);
+        NodeBase[] neighbors = GetAdjacentNeighbors(tile);
         for (int i = 0; i < neighbors.Length; i++) {
             if (neighbors[i] == null) {
                 continue;
@@ -233,7 +233,7 @@ public class GridManager : MonoBehaviour
                 Vector2Int pos = new Vector2Int(col, row);
 
                 if (currentTile < TileManager.SidewalkTileManager.TileCount) {
-                    tile = TileManager.SidewalkTileManager.AllTiles[currentTile];
+                    tile = TileManager.SidewalkTileManager.Tiles[currentTile];
                 }
                 else {
                     //tile = TileManager.SidewalkTileManager.GetNewTile(pos);
@@ -258,7 +258,7 @@ public class GridManager : MonoBehaviour
     }
 
     public TileGameplay GetActiveTileAtLocation(Vector2Int location) {
-        return TileManager.SidewalkTileManager.ActiveTilesByGridpos[location];
+        return TileManager.SidewalkTileManager.TilesByGridpos[location];
     }
 
     public TileDeco GetDecorativeTileAtLocation(int layer, Vector2 position) {
@@ -273,7 +273,7 @@ public class GridManager : MonoBehaviour
     /// </summary>
     /// <param name="node">Node to get neighbors of.</param>
     /// <returns></returns>
-    public NodeBase[] GetNeighbors(NodeBase node) {
+    public NodeBase[] GetAdjacentNeighbors(NodeBase node) {
         NodeBase[] neighbors = new NodeBase[4];
 
         NodeBase[] tiles = TileManager.GetAllActiveGameplayTiles().ToArray<NodeBase>();
@@ -399,7 +399,7 @@ public class GridManager : MonoBehaviour
     }
 
     public void ToggleCoords(bool show) {
-        foreach (NodeBase node in TileManager.SidewalkTileManager.AllTiles) {
+        foreach (NodeBase node in TileManager.SidewalkTileManager.Tiles) {
             TileGameplay tile = node as TileGameplay;
             tile.ToggleCoords(show);
         }

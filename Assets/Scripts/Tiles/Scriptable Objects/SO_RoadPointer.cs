@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace Traffic
@@ -12,11 +13,11 @@ namespace Traffic
         [SerializeField]
         private List<Direction> m_Directions = new();
 
-        public Sprite Texture2D { get => m_Sprite; }
-        public List<Direction> Directions { get => m_Directions; }
+        public Sprite Sprite { get => m_Sprite; }
+        public HashSet<Direction> Directions { get => m_Directions.ToHashSet(); }
 
-        public Dictionary<List<Direction>, Sprite> GetTexture() {
-            return new Dictionary<List<Direction>, Sprite>() { { Directions, m_Sprite } };
+        public Dictionary<HashSet<Direction>, Sprite> GetTexture() {
+            return new Dictionary<HashSet<Direction>, Sprite>() { { Directions, m_Sprite } };
         }
     }
 }

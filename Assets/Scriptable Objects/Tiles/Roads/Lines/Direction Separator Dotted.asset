@@ -10,8 +10,8 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: e64b68aa29f728944b6b58e954efbaff, type: 3}
-  m_Name: Direction Separator
+  m_Name: Direction Separator Dotted
   m_EditorClassIdentifier: 
-  m_Sprite: {fileID: 21300000, guid: 37a8cf0cb74ddd645808a44615e2dfb7, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 73c76ed1b81a60a499bb0ed698cb86c7, type: 3}
   m_Color: {r: 1, g: 0.94415843, b: 0, a: 1}
-  m_LineType: 1
+  m_LineType: 3

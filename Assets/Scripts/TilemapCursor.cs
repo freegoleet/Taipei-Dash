@@ -24,14 +24,14 @@ namespace Traffic
         public TileGameplay GameplayTile { get => m_GameplayTile; }
         public Transform Cursor { get => m_Cursor; }
 
-        private TileType CurrentCursorTileType { get; set; }
+        private TileType CurrentCursorTileType { get; set; } = TileType.None;
 
         public void UpdateCursorPos(Tile tile) {
             HoveredTileGridIndex = tile.GridPosition;
             transform.position = tile.transform.position;
         }
 
-        public Tile GetCursorTile() {
+        public Tile GetCurrentCursorTile() {
             switch (CurrentCursorTileType) {
                 case TileType.Road:
                     return m_RoadTile;
@@ -42,7 +42,7 @@ namespace Traffic
                 case TileType.Gameplay:
                     return m_GameplayTile;
                 case TileType.None:
-                    break;
+                    return null;
             }
             return null;
         }
@@ -50,9 +50,11 @@ namespace Traffic
         public void SelectNewTileType(SO_Tile data) {
             TileType type = data.GetTileType();
             if (CurrentTile != null) {
-                var tile = GetCursorTile();
-                if (tile.TileType != data.GetTileType()) {
-                    CurrentTile.gameObject.SetActive(false);
+                var cursorTile = GetCurrentCursorTile();
+                if(cursorTile != null) {
+                    if (cursorTile.TileType != data.GetTileType()) {
+                        CurrentTile.gameObject.SetActive(false);
+                    }
                 }
             }
 
@@ -84,54 +86,38 @@ namespace Traffic
                 GameplayTile.SetFacing(Direction.Up);
             }
 
+            CurrentCursorTileType = type;
             ToggleShowCursorTile(true, type);
         }
 
-        public void ToggleShowCursorTile(bool show, TileType tileType = TileType.None) {
+        public void ToggleShowCursor(bool show) {
             Cursor.gameObject.SetActive(show);
+        }
 
-            if (tileType == CurrentCursorTileType) {
-                return;
-            }
-
-            switch (CurrentCursorTileType) {
-                case TileType.Road:
-                    RoadTile.gameObject.SetActive(false);
-                    break;
-                case TileType.Autofit:
-                    SidewalkTile.gameObject.SetActive(false);
-                    break;
-                case TileType.Deco:
-                    DecoTile.gameObject.SetActive(false);
-                    break;
-                case TileType.Gameplay:
-                    GameplayTile.gameObject.SetActive(false);
-                    break;
-                case TileType.None:
-                    break;
-            }
-
-            if (show == false) {
-                return;
-            }
-
+        public GameObject GetTileByType(TileType tileType) {
             switch (tileType) {
                 case TileType.Road:
-                    RoadTile.gameObject.SetActive(true);
-                    break;
+                    return RoadTile.gameObject;
                 case TileType.Autofit:
-                    SidewalkTile.gameObject.SetActive(true);
-                    break;
+                    return SidewalkTile.gameObject;
                 case TileType.Deco:
-                    DecoTile.gameObject.SetActive(true);
-                    break;
+                    return DecoTile.gameObject;
                 case TileType.Gameplay:
-                    GameplayTile.gameObject.SetActive(true);
-                    break;
-                case TileType.None:
-                    return;
+                    return GameplayTile.gameObject;
             }
+            return null;
+        }
 
+        public void ToggleShowCursorTile(bool show, TileType tileType = TileType.None) {
+            if(CurrentCursorTileType == TileType.None) {
+                return;
+            }
+            if(tileType == TileType.None) {
+                GetTileByType(CurrentCursorTileType).SetActive(show);
+                return;
+            }
+            GetTileByType(CurrentCursorTileType).SetActive(!show);
+            GetTileByType(tileType).SetActive(show);
             CurrentCursorTileType = tileType;
         }
     }

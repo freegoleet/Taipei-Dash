@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using TMPro;
 using Traffic;
 using UnityEngine;
@@ -23,7 +22,7 @@ public class Tile : NodeBase
     public SpriteRenderer ImgHighlight { get => m_ImgHighlight; }
     public TextMeshPro TxtCoords { get => m_TxtCoords; }
     public TextMeshPro TxtValue { get => m_TxtValue; }
-    public NeighborSystem NeighborSystem { get; private set; } = new NeighborSystem();
+    public NeighborSystem NeighborSystem { get; set; } = null;
 
     public virtual void Initialize(SO_Tile data, Vector2Int gridPos, bool cursor = false) {
         if (cursor == false) {
@@ -35,6 +34,7 @@ public class Tile : NodeBase
         Data = data;
         TileType = data.GetTileType();
         ImgBackground.sprite = data.Background;
+        NeighborSystem = new NeighborSystem(this);
     }
 
     public virtual void SetFacing(Direction facing) {
@@ -64,6 +64,9 @@ public class Tile : NodeBase
         TxtCoords.gameObject.SetActive(show);
     }
 
+    public virtual void FitTile() {
+
+    }
 }
 
 public class TileGUI

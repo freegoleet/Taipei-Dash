@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Traffic;
@@ -11,8 +12,8 @@ public class GameplayTileManager<T> where T : Tile
     public Transform TileContainer { get; set; } = null;
     public TileManager TileManager { get; private set; } = null;
 
-    public List<T> AllTiles { get; private set; } = new();
-    public Dictionary<Vector2Int, T> ActiveTilesByGridpos { get; private set; } = new();
+    public List<T> Tiles { get; private set; } = new();
+    public Dictionary<Vector2Int, T> TilesByGridpos { get; private set; } = new();
     public int TileCount { get; private set; } = 0;
 
     public GameplayTileManager(TileType tileType, T tile, Transform activeTileContainer, TileManager tileManager) {
@@ -25,7 +26,7 @@ public class GameplayTileManager<T> where T : Tile
     public List<T> AddTiles() {
         void AddNewTile(T tile) {
             Debug.Log("added tile " + typeof(T));
-            ActiveTilesByGridpos.Add(tile.GridPosition, tile);
+            TilesByGridpos.Add(tile.GridPosition, tile);
             TileManager.AllTilesByGridpos.Add(tile.GridPosition, tile);
             TileManager.GameplayTilecount++;
         }
@@ -35,10 +36,10 @@ public class GameplayTileManager<T> where T : Tile
             if (list[i].GetType() != typeof(T)) {
                 continue;
             }
-            AllTiles.Add(list[i]);
+            Tiles.Add(list[i]);
         }
 
-        foreach (var tile in AllTiles) {
+        foreach (var tile in Tiles) {
             if(tile.GetType() != typeof(T)) {
                 continue;
             }
@@ -59,19 +60,21 @@ public class GameplayTileManager<T> where T : Tile
             }
         }
 
-        return AllTiles;
+        return Tiles;
     }
 
     public void RemoveTile(T tile) {
-        AllTiles.Remove(tile);
-        ActiveTilesByGridpos.Remove(tile.GridPosition);
+        Tiles.Remove(tile);
+        TilesByGridpos.Remove(tile.GridPosition);
+        TileManager.AllTiles[Array.IndexOf(TileManager.AllTiles, tile)] = null;
+        TileManager.AllTilesByGridpos[tile.GridPosition] = null;
         GameObject.DestroyImmediate(tile.gameObject);
         TileCount--;
         TileManager.GameplayTilecount--;
     }
 
     public void ReturnTile(Vector2Int pos) {
-        T tile = ActiveTilesByGridpos[pos];
+        T tile = TilesByGridpos[pos];
         RemoveTile(tile);
     }
 
@@ -89,21 +92,20 @@ public class GameplayTileManager<T> where T : Tile
     public T GetNewTile(Vector2Int gridPosition, int index) {
         T tile = default;
         
-        tile = Object.Instantiate(TilePrefab.gameObject, TileContainer).GetComponent<T>();
+        tile = UnityEngine.Object.Instantiate(TilePrefab.gameObject, TileContainer).GetComponent<T>();
 
         TileCount++;
         TileManager.GameplayTilecount++;
 
-        AllTiles.Add(tile);
-        TileManager.AllTiles[index] = tile;
-        TileManager.AllTilesByGridpos[gridPosition] = tile;
-
-        if (ActiveTilesByGridpos.ContainsKey(gridPosition) == true) {
-            ActiveTilesByGridpos[gridPosition] = tile;
+        Tiles.Add(tile);
+        if (TilesByGridpos.ContainsKey(gridPosition) == true) {
+            TilesByGridpos[gridPosition] = tile;
         }
         else {
-            ActiveTilesByGridpos.Add(gridPosition, tile);
+            TilesByGridpos.Add(gridPosition, tile);
         }
+        TileManager.AllTiles[index] = tile;
+        TileManager.AllTilesByGridpos[gridPosition] = tile;
 
         if(index >= 0) {
             tile.transform.SetSiblingIndex(index);
@@ -116,19 +118,19 @@ public class GameplayTileManager<T> where T : Tile
     }
 
     public List<T> GetAllTiles() {
-        return AllTiles;
+        return Tiles;
     }
 
     public void DestroyAllTiles() {
-        foreach (T tile in AllTiles) {
+        foreach (T tile in Tiles) {
             if (tile == null) {
                 continue;
             }
-            Object.DestroyImmediate(tile.gameObject);
+            UnityEngine.Object.DestroyImmediate(tile.gameObject);
         }
 
-        AllTiles.Clear();
-        ActiveTilesByGridpos.Clear();
+        Tiles.Clear();
+        TilesByGridpos.Clear();
         TileCount = 0;
     }
 }

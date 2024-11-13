@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using Traffic;
 using UnityEngine;
@@ -7,17 +8,21 @@ public class TileRoad : TileGameplay
 {
     [Header("Traffic Details")]
     [SerializeField]
-    private SpriteRenderer m_ImgPointer = null;
+    public DebugDirections m_DebugDirections = null;
+    [SerializeField]
+    public RoadPointer m_RoadPointer = null;
 
     [Header("Lines")]
     [SerializeField]
     private SpriteRenderer m_ImgLineTop = null;
     [SerializeField]
-    private SpriteRenderer m_ImgLineBot = null; 
+    private SpriteRenderer m_ImgLineBot = null;
     [SerializeField]
-    private SpriteRenderer m_ImgLineLeft = null; 
+    private SpriteRenderer m_ImgLineLeft = null;
     [SerializeField]
     private SpriteRenderer m_ImgLineRight = null;
+    [SerializeField]
+    private SpriteRenderer m_ImgCrosswalk = null;
 
     [Header("AStar Values")]
     [SerializeField]
@@ -29,83 +34,251 @@ public class TileRoad : TileGameplay
     [SerializeField]
     private TextMeshPro m_FCost = null;
 
-    public SpriteRenderer Pointer { get => m_ImgPointer; }
-    public SpriteRenderer ImgLineTop { get => m_ImgLineTop; }
-    public SpriteRenderer ImgLineBot { get => m_ImgLineBot; }
-    public SpriteRenderer ImgLineLeft { get => m_ImgLineLeft; }
-    public SpriteRenderer ImgLineRight { get => m_ImgLineRight; }
+    public RoadPointer Pointer { get => m_RoadPointer; }
+    public DebugDirections DebugDirections { get => m_DebugDirections; }
+    public SpriteRenderer LineTop { get => m_ImgLineTop; }
+    public SpriteRenderer LineBot { get => m_ImgLineBot; }
+    public SpriteRenderer LineLeft { get => m_ImgLineLeft; }
+    public SpriteRenderer LineRight { get => m_ImgLineRight; }
+    public SpriteRenderer Crosswalk { get => m_ImgCrosswalk; }
 
-    public Direction[] DrivableDirections { get; set; } = null;
+    public bool HasCrosswalk { get; set; } = false;
+    public bool HasStopLine { get; set; } = false;
+    public int ConnectionIndex { get; set; } = 0;
+    public RoadtileNeighbors RoadtileNeighbors { get; private set; } = null;
 
-    private Dictionary<Direction, Vector2Int> RoadBehind = new() {
-        { Direction.Up, new Vector2Int(0, -1) },
-        { Direction.Down, new Vector2Int(0, 1) },
-        { Direction.Left, new Vector2Int(1, 0) },
-        { Direction.Right, new Vector2Int(-1, 0) },
+    public Dictionary<Direction, bool> InConnections { get; set; } = new Dictionary<Direction, bool>() {
+        { Direction.Up, false },
+        { Direction.Down, false },
+        { Direction.Left, false },
+        { Direction.Right, false },
+    };
+
+    public Dictionary<Direction, bool> OutConnections { get; set; } = new Dictionary<Direction, bool>() {
+        { Direction.Up, false },
+        { Direction.Down, false },
+        { Direction.Left, false },
+        { Direction.Right, false },
+    };
+
+    private Dictionary<Direction, bool> Lines { get; set; } = new() {
+        { Direction.Up, false },
+        { Direction.Down, false },
+        { Direction.Left, false },
+        { Direction.Right, false },
     };
 
     public override void Initialize(SO_Tile data, Vector2Int gridPos, bool cursor = false) {
         base.Initialize(data, gridPos, cursor);
+        RoadtileNeighbors = new RoadtileNeighbors(this);
+        Pointer.ToggleShow(false);
+    }
+
+    public void ToggleShowConnections(bool show) {
+        DebugDirections.ToggleShowDebugDirections(show);
+    }
+
+    private void ToggleTopLine(bool show) {
+        LineTop.gameObject.SetActive(show);
+        Lines[Direction.Up] = show;
+    }
+
+    private void ToggleBotLine(bool show) {
+        LineBot.gameObject.SetActive(show);
+        Lines[Direction.Down] = show;
+    }
+
+    private void ToggleLeftLine(bool show) {
+        LineLeft.gameObject.SetActive(show);
+        Lines[Direction.Left] = show;
+    }
+
+    private void ToggleRightLine(bool show) {
+        LineRight.gameObject.SetActive(show);
+        Lines[Direction.Right] = show;
+    }
+
+    public void ToggleCrosswalk(bool show) {
+        foreach (Direction dir in Lines.Keys.ToList()) {
+            Lines[dir] = !show;
+        }
+        HasCrosswalk = show;
+        Crosswalk.gameObject.SetActive(show);
+        SetCrosswalkDir(Facing);
+
+        if(show == true) {
+            ToggleLine(Direction.Up, false);
+            ToggleLine(Direction.Down, false);
+            ToggleLine(Direction.Left, false);
+            ToggleLine(Direction.Right, false);
+        }
+    }
+
+    public void SetCrosswalkDir(Direction dir) {
+        switch (dir) {
+            case Direction.Up:
+                Crosswalk.transform.localEulerAngles = new Vector3(0, 0, 90);
+                break;
+            case Direction.Right:
+                Crosswalk.transform.localEulerAngles = new Vector3(0, 0, 0);
+                break;
+            case Direction.Down:
+                Crosswalk.transform.localEulerAngles = new Vector3(0, 0, 90);
+                break;
+            case Direction.Left:
+                Crosswalk.transform.localEulerAngles = new Vector3(0, 0, 0);
+                break;
+        }
+    }
+
+    public bool GetHasLine(Direction dir) {
+        bool hasLine = false;
+        switch (dir) {
+            case Direction.Up:
+                hasLine = LineTop.gameObject.activeSelf;
+                break;
+            case Direction.Right:
+                hasLine = LineRight.gameObject.activeSelf;
+                break;
+            case Direction.Down:
+                hasLine = LineBot.gameObject.activeSelf;
+                break;
+            case Direction.Left:
+                hasLine = LineLeft.gameObject.activeSelf;
+                break;
+        }
+        return hasLine;
+    }
+
+    public void SetLineType(Direction dir, SO_RoadLine line) {
+        SpriteRenderer renderer = null;
+
+        switch (dir) {
+            case Direction.Up:
+                renderer = LineTop;
+                break;
+            case Direction.Right:
+                renderer = LineRight;
+                break;
+            case Direction.Down:
+                renderer = LineBot;
+                break;
+            case Direction.Left:
+                renderer = LineLeft;
+                break;
+        }
+
+        renderer.sprite = line.Sprite;
+        renderer.color = line.Color;
+    }
+
+    public void ToggleLine(Direction dir, bool show) {
+        if(HasCrosswalk == true && show == true) {
+            return;
+        }
+
+        switch (dir) {
+            case Direction.Up:
+                ToggleTopLine(show);
+                break;
+            case Direction.Right:
+                ToggleRightLine(show);
+                break;
+            case Direction.Down:
+                ToggleBotLine(show);
+                break;
+            case Direction.Left:
+                ToggleLeftLine(show);
+                break;
+        }
     }
 
     public void TogglePointer(bool show) {
         Pointer.gameObject.SetActive(show);
     }
 
-    public void ToggleTopLine(bool show) {
-        ImgLineTop.gameObject.SetActive(show);
+    public void AddInConnection(Direction connection) {
+        if (InConnections.ContainsKey(connection) == false) {
+            return;
+        }
+        if (InConnections[connection] == true) {
+            return;
+        }
+
+        InConnections[connection] = true;
+        UpdateDebugDirections();
     }
 
-    public void ToggleBotLine(bool show) {
-        ImgLineBot.gameObject.SetActive(show);
+    public void AddOutConnection(Direction connection) {
+        if (OutConnections.ContainsKey(connection) == false) {
+            return;
+        }
+        if (OutConnections[connection] == true) {
+            return;
+        }
+        OutConnections[connection] = true;
+        UpdateDebugDirections();
     }
 
-    public void ToggleLeftLine(bool show) {
-        ImgLineLeft.gameObject.SetActive(show);
+    public void RemoveInConnection(Direction connection) {
+        if (InConnections.ContainsKey(connection) == false) {
+            return;
+        }
+        if (InConnections[connection] == false) {
+            return;
+        }
+        InConnections[connection] = false;
+        UpdateDebugDirections();
     }
 
-    public void ToggleRightLine(bool show) {
-        ImgLineRight.gameObject.SetActive(show);
+    public void RemoveOutConnection(Direction connection) {
+        if (OutConnections.ContainsKey(connection) == false) {
+            return;
+        }
+        if (OutConnections[connection] == false) {
+            return;
+        }
+        OutConnections[connection] = false;
+        UpdateDebugDirections();
     }
 
-    public void SetLeftLineType(SO_RoadLine line) {
-        ImgLineLeft.sprite = line.Sprite;
-        ImgLineLeft.color = line.Color;
+    public void SetOutConnections(Dictionary<Direction, bool> connections) {
+        OutConnections = connections;
+        UpdateDebugDirections();
     }
 
-    public void SetRightLineType(SO_RoadLine line) {
-        ImgLineRight.sprite = line.Sprite;
-        ImgLineRight.color = line.Color;
+    public void UpdateDebugDirections() {
+        bool showDir = false;
+        foreach (var inCons in InConnections) {
+            foreach (var outCons in OutConnections) {
+                showDir = false;
+                if (inCons.Value == true && outCons.Value == true) {
+                    showDir = true;
+                }
+                DebugDirections.ToggleDebugDirection(inCons.Key, outCons.Key, showDir);
+            }
+        }
     }
 
     public override void SetFacing(Direction facing) {
         base.SetFacing(facing);
+        bool leftTurn = false;
 
         switch (facing) {
             case Direction.Up:
-                transform.localEulerAngles = new Vector3(0, 0, 0);
+                Pointer.transform.localEulerAngles = new Vector3(0, leftTurn ? 180 : 0, leftTurn ? 180 : 0);
                 break;
             case Direction.Right:
-                transform.localEulerAngles = new Vector3(0, 0, 270);
+                Pointer.transform.localEulerAngles = new Vector3(0, leftTurn ? 180 : 0, leftTurn ? 90 : 270);
                 break;
             case Direction.Down:
-                transform.localEulerAngles = new Vector3(0, 0, 180);
+                Pointer.transform.localEulerAngles = new Vector3(0, leftTurn ? 180 : 0, leftTurn ? 0 : 180);
                 break;
             case Direction.Left:
-                transform.localEulerAngles = new Vector3(0, 0, 90);
+                Pointer.transform.localEulerAngles = new Vector3(0, leftTurn ? 180 : 0, leftTurn ? 270 : 90);
                 break;
         }
     }
-
-    public void FitRoad() {
-        // Check auto neighbors
-        List<Direction> neighbors = NeighborSystem.GetAllFittableAdjacentDirections();
-        foreach (Direction direction in neighbors) {
-            
-        }
-        // Do stuff depending on the results
-    }
-
 
     #region A-Star
     public void SetAStarValues(float g, float h, float f) {
