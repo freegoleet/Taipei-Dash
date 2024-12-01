@@ -73,7 +73,7 @@ namespace Traffic
                     continue;
                 }
                 if (kvp.Value.Fittable == true) {
-                    return TrafficLib.ReverseDirections(kvp.Key).Item1;
+                    return TrafficUtilities.ReverseDirections(kvp.Key).Item1;
                 }
             }
             return default;
@@ -104,6 +104,20 @@ namespace Traffic
             }
             return directions;
         }
+
+        public HashSet<Tile> GetAllFittableAdjacentNeighbors() {
+            HashSet<Tile> neighbors = new();
+            foreach (KeyValuePair<(Direction, Direction), Neighbor> kvp in Neighbors) {
+                if (kvp.Key.Item2 != Direction.None) {
+                    continue;
+                }
+                if (kvp.Value.Fittable == true) {
+                    neighbors.Add(kvp.Value.Tile);
+                }
+            }
+            return neighbors;
+        }
+
 
         public Direction GetCornerDirection() {
             (Direction, Direction) emptyDirs = (Direction.None, Direction.None);

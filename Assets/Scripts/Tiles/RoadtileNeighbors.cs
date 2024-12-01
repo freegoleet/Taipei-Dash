@@ -1,6 +1,4 @@
-using NUnit.Framework;
 using System.Collections.Generic;
-using System.Runtime.ExceptionServices;
 using Traffic;
 using UnityEngine;
 
@@ -39,7 +37,7 @@ public class RoadtileNeighbors
 
     public bool IsNeighborFacingOpposite(Direction directionToNeighbor) {
         Tile tile = Tile.NeighborSystem.Neighbors[(directionToNeighbor, Direction.None)].Tile;
-        if(TrafficLib.ReverseDirections((Tile.Facing, Direction.None)).Item1 == tile.Facing) {
+        if(TrafficUtilities.ReverseDirections((Tile.Facing, Direction.None)).Item1 == tile.Facing) {
             return true;
         }
         return false;

@@ -5,18 +5,26 @@ using UnityEngine;
 
 public class TilemapEditorWindow : EditorWindow
 {
+    // Buttons
+    private float m_ButtonWidth = 140f;
+
     private int m_SelectedTileIndex = 0;
     private int m_CursorTileIndexOld = 1;
 
     private TilemapEditor Editor { get; set; } = null;
-    private Tile m_HoveredTile = null;
 
+    // Edit
     private bool m_IsEditing = false;
-    private bool m_IsEditingOld = false;
+    private bool m_IsEditingPrev = false;
+    // Road Connections
     private bool m_ShowConnections = false;
-    private bool m_ShowConnectionsOld = false;
+    private bool m_ShowConnectionsPrev = false;
+    // Modify Tiles
     private bool m_ModifyTiles = false;
-    private bool m_ModifyTilesOld = false;
+    private bool m_ModifyTilesPrev = false;
+    // Secondary Edit
+    private bool m_SecondaryEdit = false;
+    private bool m_SecondaryEditPrev = false;
 
     private bool[] m_DecorativeLayers = null;
     private bool[] m_DecorativeLayersLast = null;
@@ -28,6 +36,8 @@ public class TilemapEditorWindow : EditorWindow
     private int m_TileModType = 0;
     private int m_TileModTypeOld = 1;
     private string[] m_TileModTypes = null;
+
+
 
     private Vector2 m_ScrollPosition = Vector2.zero;
 
@@ -112,26 +122,32 @@ public class TilemapEditorWindow : EditorWindow
     private void Controls() {
         EditorGUILayout.LabelField("Controls:");
         EditorGUILayout.BeginHorizontal();
-        if (GUILayout.Button("Refresh", GUILayout.Width(100))) {
+        if (GUILayout.Button("Refresh", GUILayout.Width(m_ButtonWidth))) {
             RefreshSystem();
         }
 
-        if (GUILayout.Button("Create Grid", GUILayout.Width(100))) {
+        if (GUILayout.Button("Create Grid", GUILayout.Width(m_ButtonWidth))) {
             Editor.GridManager.GenerateMap();
         }
         EditorGUILayout.EndHorizontal();
 
         EditorGUILayout.BeginHorizontal();
-        m_IsEditing = GUILayout.Toggle(m_IsEditing, "Toggle Editing", GUILayout.Width(100));
-        if (m_IsEditing != m_IsEditingOld) {
-            m_IsEditingOld = m_IsEditing;
+        m_IsEditing = GUILayout.Toggle(m_IsEditing, "Toggle Editing", GUILayout.Width(m_ButtonWidth));
+        if (m_IsEditing != m_IsEditingPrev) {
+            m_IsEditingPrev = m_IsEditing;
             ToggleEditing(m_IsEditing);
         }
 
-        m_ShowConnections = GUILayout.Toggle(m_ShowConnections, "Show Connections", GUILayout.Width(140));
-        if (m_ShowConnections != m_ShowConnectionsOld) {
-            m_ShowConnectionsOld = m_ShowConnections;
+        m_ShowConnections = GUILayout.Toggle(m_ShowConnections, "Show Connections", GUILayout.Width(m_ButtonWidth));
+        if (m_ShowConnections != m_ShowConnectionsPrev) {
+            m_ShowConnectionsPrev = m_ShowConnections;
             Editor.ToggleShowConnections(m_ShowConnections);
+        }
+
+        m_SecondaryEdit = GUILayout.Toggle(m_SecondaryEdit, "Secondary Edit", GUILayout.Width(m_ButtonWidth));
+        if (m_SecondaryEdit != m_SecondaryEditPrev) {
+            m_SecondaryEditPrev = m_SecondaryEdit;
+            Editor.TilemapCursor.SetHoverOverlayColor(m_SecondaryEdit ? Color.yellow : Color.white);
         }
 
         EditorGUILayout.EndHorizontal();
@@ -142,7 +158,7 @@ public class TilemapEditorWindow : EditorWindow
     private void TileModification() {
         EditorGUILayout.LabelField("Tile Modification:");
         EditorGUILayout.BeginHorizontal();
-        if (Editor.Textures != null) {
+        if (m_TileModTypes.Length > 0) {
             m_TileModType = GUILayout.SelectionGrid(m_TileModType, m_TileModTypes, 4, GUILayout.Width(300));
             if (m_TileModType != m_TileModTypeOld) {
                 m_TileModTypeOld = m_TileModType;
@@ -155,20 +171,20 @@ public class TilemapEditorWindow : EditorWindow
     }
 
     private void DecorativeLayers() {
-        EditorGUILayout.LabelField("Decolayer:");
-        EditorGUILayout.BeginHorizontal();
-        for (int i = 0; i < m_DecorativeLayers.Length; i++) {
-            m_DecorativeLayers[i] = GUILayout.Toggle(m_DecorativeLayers[i], "Layer " + (i + 1), GUILayout.Width(80));
-            if ((i + 1) % 4 == 0) {
-                EditorGUILayout.EndHorizontal();
-                EditorGUILayout.BeginHorizontal();
-            }
-            if (m_DecorativeLayers[i] != m_DecorativeLayersLast[i]) {
-                ToggleShowDecoLayer(i, m_DecorativeLayers[i]);
-            }
-        }
-        EditorGUILayout.EndHorizontal();
-        EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+        //EditorGUILayout.LabelField("Decolayer:");
+        //EditorGUILayout.BeginHorizontal();
+        //for (int i = 0; i < m_DecorativeLayers.Length; i++) {
+        //    m_DecorativeLayers[i] = GUILayout.Toggle(m_DecorativeLayers[i], "Layer " + (i + 1), GUILayout.Width(80));
+        //    if ((i + 1) % 4 == 0) {
+        //        EditorGUILayout.EndHorizontal();
+        //        EditorGUILayout.BeginHorizontal();
+        //    }
+        //    if (m_DecorativeLayers[i] != m_DecorativeLayersLast[i]) {
+        //        ToggleShowDecoLayer(i, m_DecorativeLayers[i]);
+        //    }
+        //}
+        //EditorGUILayout.EndHorizontal();
+        //EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
     }
 
     private void ToggleShowDecoLayer(int layer, bool show) {
@@ -215,47 +231,43 @@ public class TilemapEditorWindow : EditorWindow
     }
 
     private void OnSceneMouseOver(SceneView view) {
+        if (Event.current.type == EventType.Repaint) {
+            Editor.EditorTick(Time.deltaTime);
+        }
         if (Event.current.type == EventType.MouseMove) {
             Vector3 pos = HandleUtility.GUIPointToWorldRay(Event.current.mousePosition).origin;
             NodeBase nodebase = Editor.GridManager.GetTileClosestToPosition(pos);
             Tile tile = (Tile)nodebase;
 
-            if (m_HoveredTile == null) {
-                m_HoveredTile = tile;
-            }
-
-            if (m_HoveredTile.GridPosition != nodebase.GridPosition) {
-                m_HoveredTile = tile;
-                Editor.TilemapCursor.UpdateCursorPos(tile);
-
-                if(Editor.TilemapCursor.GetCurrentCursorTile() is Tile cursorTile == false) {
-                    return;
-                }
-                if (tile.Data == cursorTile) {
-                    Editor.UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllFittableNeighbors());
-                }
-                else {
-                    Editor.UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllUnfittableNeighbors());
-                }
-            }
+            Editor.NewTileHovered(tile, nodebase.GridPosition);
         }
 
         if (Event.current.type == EventType.MouseDown) {
             if (Event.current.keyCode == KeyCode.Mouse0) {
-                Editor.EditTile(m_HoveredTile, true);
+                if(m_SecondaryEdit == false) {
+                    Editor.EditTile(true);
+                    return;
+                }
+                Editor.EditTileSecondary();
             }
 
             if (Event.current.keyCode == KeyCode.Mouse1) {
-                Editor.EditTile(m_HoveredTile, false);
+                Editor.EditTile(false);
             }
         }
 
         if (Event.current.type == EventType.KeyDown) {
             Tile tile = Editor.TilemapCursor.GetCurrentCursorTile();
             if (Event.current.keyCode == KeyCode.R) {
-                if (tile.Data.Rotatable == true) {
-                    tile.SetFacing(TrafficLib.GetNextDirection(tile.Facing));
+                if ((TileModType)m_TileModType == TileModType.Placement) {
+                    if (tile.Data.Rotatable == true) {
+                        tile.SetFacing(TrafficUtilities.GetNextDirection(tile.Facing));
+                    }
+                    return;
                 }
+                m_SecondaryEditPrev = m_SecondaryEdit;
+                m_SecondaryEdit = !m_SecondaryEdit;
+                Editor.TilemapCursor.SetHoverOverlayColor(m_SecondaryEdit ? Color.yellow : Color.white);
             }
         }
     }

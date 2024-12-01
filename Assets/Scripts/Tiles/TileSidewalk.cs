@@ -33,8 +33,8 @@ public class TileSidewalk : TileAutofit
     public Transform SpriteMask3 { get => m_SpriteMask3; }
     public Transform SpriteMask4 { get => m_SpriteMask4; }
 
-    private Dictionary<int, SpriteRenderer> Curbs = null;
-    private Dictionary<int, Transform> Masks = null;
+    private Dictionary<int, SpriteRenderer> Curbs { get; set; } = null;
+    private Dictionary<int, Transform> Masks { get; set; } = null;
 
     public override void Initialize(SO_Tile data, Vector2Int gridPos, bool cursor = false) {
         base.Initialize(data, gridPos, cursor);

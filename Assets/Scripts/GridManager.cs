@@ -276,7 +276,7 @@ public class GridManager : MonoBehaviour
     public NodeBase[] GetAdjacentNeighbors(NodeBase node) {
         NodeBase[] neighbors = new NodeBase[4];
 
-        NodeBase[] tiles = TileManager.GetAllActiveGameplayTiles().ToArray<NodeBase>();
+        NodeBase[] tiles = TileManager.GetAllActiveGameplayTiles();
 
         int index = Array.IndexOf(tiles, node) + 1;
 
@@ -378,22 +378,6 @@ public class GridManager : MonoBehaviour
         else {
             result.y = posInGrid.y;
         }
-
-        //List<NodeBase> list = TileManager.GetAllActiveGameplayTiles().ToList<NodeBase>();
-        //if (decoLayer != -1) {
-        //list.AddRange(TileManager.DecoTileManager.DecoLayers[decoLayer].TilesByLocation.Values.ToList());
-        //}
-
-        //NodeBase closest = list.First();
-        //float currentMag = (closest.transform.position - pos).magnitude;
-
-        //foreach (NodeBase tile in list) {
-        //    float nextTileMag = (tile.transform.position - pos).magnitude;
-        //    if (nextTileMag < currentMag) {
-        //        closest = tile;
-        //        currentMag = nextTileMag;
-        //    }
-        //}
 
         return TileManager.GetTileByPos(result);
     }

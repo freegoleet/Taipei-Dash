@@ -1,9 +1,7 @@
 using TMPro;
-using Traffic;
 using UnityEngine;
 
-
-public abstract class Entity : MonoBehaviour
+public class Entity : MonoBehaviour
 {
     [SerializeField]
     protected SpriteRenderer m_SpriteRenderer = null;
@@ -12,14 +10,20 @@ public abstract class Entity : MonoBehaviour
     [SerializeField]
     protected TextMeshPro m_TxtEntityId = null;
 
-    protected int m_Hitpoints = 0;
     public ulong Id { get; set; } = ulong.MaxValue;
-    public ulong OwnerId { get; set; } = ulong.MaxValue;
 
     public int Hitpoints { get { return m_Hitpoints; } }
     public TileGameplay TileGameplay { get { return m_Tile; } set { m_Tile = value; } }
-
     public TextMeshPro TxtEntityId { get { return m_TxtEntityId; } }
+    public Pathfinding Pathfinding { get; private set; } = null;
+
+    public SO_Entity EntityData { get; private set; } = null;
+    protected int m_Hitpoints = 0;
+
+    public void Initialize(SO_Entity data) {
+        EntityData = data;
+        Pathfinding = new(this);
+    }
 
     public void Tick(float dt) {
 

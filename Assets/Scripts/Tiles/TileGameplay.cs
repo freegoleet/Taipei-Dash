@@ -11,13 +11,11 @@ public class TileGameplay : Tile
     [SerializeField]
     private float m_Offset = 0;
 
-    public List<Occupant> Occupants { get; private set; } = new();
-
-    public SpriteRenderer ImgFeature { get => m_ImgFeature; }
     public float Offset { get => m_Offset; }
-    public Entity Entity { get; set; }
+    public SpriteRenderer ImgFeature { get => m_ImgFeature; }
+    public List<Occupant> Occupants { get; private set; } = new();
+    public Entity Entity { get; set; } = null;
     public SO_TileGameplay GpData { get; private set; } = null;
-
 
     public override void Initialize(SO_Tile data, Vector2Int gridPos, bool cursor = false) {
         base.Initialize(data, gridPos, cursor);

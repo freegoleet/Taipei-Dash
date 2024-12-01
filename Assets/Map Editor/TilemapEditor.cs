@@ -19,6 +19,7 @@ namespace Traffic
         Connections,
         Crosswalk,
         Stopline,
+        TrafficLight,
         Pointer
     }
 
@@ -48,9 +49,9 @@ namespace Traffic
         // Other
         public TileModType CurrentTileModType { get; private set; }
         public bool ShowConnections { get; private set; } = false;
-        public Tile HoveredTile { get; private set; } = null;
+        public Tile HoveredTile { get; set; } = null;
         public List<TileGUI> GUITileList { get; private set; } = new();
-        public Dictionary<HashSet<Direction>, SO_RoadPointer> Pointers { get; private set; } = null;
+        public Dictionary<RoadPointer, SO_RoadPointer> Pointers { get; private set; } = null;
         public Dictionary<SO_Tile, UI_Item_Button_Tile> Buttons { get; private set; } = new();
         public GridManager GridManager { get => m_GridManager; }
         public GameObject HoverOverlay { get; private set; } = null;
@@ -60,8 +61,40 @@ namespace Traffic
         public bool ShowPointer { get; private set; } = false;
         public TilemapCursor TilemapCursor { get => m_TilemapCursor; private set => m_TilemapCursor = value; }
 
+        // TrafficLight
+        private TrafficLight m_FirstTL = null;
+
+        public Action<Tile> OnNewTileHovered = null;
         public Action<int> OnNewCursorTile = null;
         public Action<int, bool> OnShowLayer = null;
+
+#if UNITY_EDITOR
+        public void EditorTick(float dt) {
+            ShowTrafficLightConnections();
+        }
+#endif
+
+        public void NewTileHovered(Tile tile, Vector2Int newPos) {
+            if(HoveredTile != null) {
+                if (HoveredTile.GridPosition == newPos) {
+                    return;
+                }
+            }
+
+            HoveredTile = tile;
+            TilemapCursor.UpdateCursorPos(tile);
+            OnNewTileHovered?.Invoke(tile);
+
+            if (TilemapCursor.GetCurrentCursorTile() is Tile cursorTile == false) {
+                return;
+            }
+            if (tile.Data == cursorTile) {
+                UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllFittableNeighbors());
+            }
+            else {
+                UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllUnfittableNeighbors());
+            }
+        }
 
         public void ToggleShowConnections(bool show) {
             ShowConnections = show;
@@ -77,7 +110,7 @@ namespace Traffic
 
             if (SOGameplayTiles[index].Rotatable == false) {
                 Tile cursorTile = TilemapCursor.GetCurrentCursorTile();
-                if(cursorTile != null) { 
+                if (cursorTile != null) {
                     TilemapCursor.GetCurrentCursorTile().SetFacing(Direction.Up);
                 }
             }
@@ -199,19 +232,22 @@ namespace Traffic
                 case TileModType.Pointer:
                     TilemapCursor.ToggleShowCursorTile(false);
                     break;
+                case TileModType.TrafficLight:
+                    TilemapCursor.ToggleShowCursorTile(false);
+                    break;
             }
         }
 
-        public void EditTile(Tile tile, bool clockwise) {
+        public void EditTile(bool standard) {
             switch (CurrentTileModType) {
                 case TileModType.Placement:
-                    PlaceTile(tile);
+                    PlaceTile(HoveredTile);
                     break;
             }
-            if (tile is TileRoad tileRoad == true) {
+            if (HoveredTile is TileRoad tileRoad == true) {
                 switch (CurrentTileModType) {
                     case TileModType.Connections:
-                        GridManager.TileManager.RoadUtils.ToggleDrivableDirections(tileRoad, clockwise);
+                        GridManager.TileManager.RoadUtils.ToggleDrivableDirections(tileRoad, standard);
                         break;
                     case TileModType.Crosswalk:
                         GridManager.TileManager.RoadUtils.ToggleCrosswalk(tileRoad);
@@ -222,8 +258,75 @@ namespace Traffic
                     case TileModType.Pointer:
                         GridManager.TileManager.RoadUtils.TogglePointer(tileRoad);
                         break;
-
+                    case TileModType.TrafficLight:
+                        GridManager.TileManager.RoadUtils.ToggleTrafficLight(tileRoad);
+                        break;
                 }
+            }
+        }
+
+        public void EditTileSecondary() {
+            switch (CurrentTileModType) {
+                case TileModType.Placement:
+                    PlaceTile(HoveredTile);
+                    break;
+            }
+            if (HoveredTile is TileRoad tileRoad == true) {
+                switch (CurrentTileModType) {
+                    case TileModType.Connections:
+                        break;
+                    case TileModType.Crosswalk:
+                        break;
+                    case TileModType.Stopline:
+                        break;
+                    case TileModType.Pointer:
+                        break;
+                    case TileModType.TrafficLight:
+                        TrafficLight light = GetTrafficLight(HoveredTile);
+                        ConnectTrafficLights(light);
+                        break;
+                }
+            }
+        }
+
+        public TrafficLight GetTrafficLight(Tile tile) {
+            if (tile is TileRoad road == false) {
+                return null;
+            }
+            return road.TrafficLight;
+        }
+
+        public void ConnectTrafficLights(TrafficLight trafficLight) {
+            if (m_FirstTL == null) {
+                m_FirstTL = trafficLight;
+                m_FirstTL.Road.ToggleHighlight(true);
+                return;
+            }
+
+            if(trafficLight.Road.Facing == m_FirstTL.Road.Facing ||
+                TrafficUtilities.ReverseDirections(trafficLight.Road.Facing) == m_FirstTL.Road.Facing) {
+                trafficLight.SyncNew(m_FirstTL);
+            }
+            else
+            {
+                trafficLight.SyncNewReverse(m_FirstTL);
+            }
+
+            m_FirstTL.SyncTimers();
+            m_FirstTL.Road.ToggleHighlight(false);
+            m_FirstTL = null;
+        }
+
+        public void ShowTrafficLightConnections() {
+            TrafficLight trafficLight = GetTrafficLight(HoveredTile);
+            if (trafficLight == null) {
+                return;
+            }
+            foreach (TrafficLight light in trafficLight.SyncedLights) {
+                Debug.DrawLine(trafficLight.transform.position, light.transform.position, Color.green);
+            }
+            foreach (TrafficLight light in trafficLight.SyncedReverseLights) {
+                Debug.DrawLine(trafficLight.transform.position, light.transform.position, Color.red);
             }
         }
     }

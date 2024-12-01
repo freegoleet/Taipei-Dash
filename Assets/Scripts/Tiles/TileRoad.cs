@@ -45,7 +45,9 @@ public class TileRoad : TileGameplay
     public bool HasCrosswalk { get; set; } = false;
     public bool HasStopLine { get; set; } = false;
     public int ConnectionIndex { get; set; } = 0;
+    public TrafficLight TrafficLight { get; private set; } = null;
     public RoadtileNeighbors RoadtileNeighbors { get; private set; } = null;
+    public bool GreenLit { get; set; } = true;
 
     public Dictionary<Direction, bool> InConnections { get; set; } = new Dictionary<Direction, bool>() {
         { Direction.Up, false },
@@ -258,6 +260,14 @@ public class TileRoad : TileGameplay
                 DebugDirections.ToggleDebugDirection(inCons.Key, outCons.Key, showDir);
             }
         }
+    }
+
+    public void AddToTrafficLight(TrafficLight trafficLight) {
+        TrafficLight = trafficLight;
+    }
+
+    public void RemoveFromTrafficLight() {
+        TrafficLight = null;
     }
 
     public override void SetFacing(Direction facing) {

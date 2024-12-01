@@ -15,6 +15,8 @@ namespace Traffic
         private TileDeco m_DecoTile = null;
         [SerializeField]
         private TileGameplay m_GameplayTile = null;
+        [SerializeField]
+        private TrafficLight m_TrafficLight = null;
 
         [Header("Lists")]
         [SerializeField]
@@ -30,27 +32,21 @@ namespace Traffic
         public TileRoad RoadTile { get => m_RoadTile; }
         public TileDeco DecoTile { get => m_DecoTile; }
         public TileGameplay GameplayTile { get => m_GameplayTile; }
+        public TrafficLight TrafficLight { get => m_TrafficLight; }
 
         public List<SO_TileGameplay> GameplayTiles { get { return m_Tiles; } }
         public List<SO_TileDecorative> DecoTiles { get => m_DecoTiles; }
         public List<SO_RoadPointer> Pointers { get { return m_Pointers; } }
         public List<SO_RoadLine> Lines { get { return m_Lines; } }
 
-        public Dictionary<HashSet<Direction>, SO_RoadPointer> GetPointers() {
-            Dictionary<HashSet<Direction>, SO_RoadPointer> pointers = new();
+
+        public Dictionary<RoadPointer, SO_RoadPointer> GetPointers() {
+            Dictionary<RoadPointer, SO_RoadPointer> pointers = new();
             foreach (var pointer in Pointers) {
-                pointers.Add(pointer.Directions, pointer);
+                pointers.TryAdd(pointer.PointerType, pointer);
             }
 
             return pointers;
-        }
-
-        public SO_RoadPointer GetRoadPointer(HashSet<Direction> directions) {
-            if(directions.Contains(Direction.Up) == false) {
-                return GetPointers()[new() { Direction.Right }];
-            }
-
-            return GetPointers()[directions];
         }
 
         public Dictionary<LineType, SO_RoadLine> GetRoadlines() {
