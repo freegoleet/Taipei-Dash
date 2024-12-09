@@ -32,7 +32,7 @@ public class RoadUtils
         adjacents.Add(TrafficUtilities.ReverseDirections(tile.Facing));
 
         for (int i = 0; i < adjacents.Count; i++) {
-            if (tile.NeighborSystem.Neighbors[(adjacents[i], Direction.None)].Tile is TileRoad neighbor == false) {
+            if (tile.NeighborSystem.GetNeighborTile((adjacents[i], Direction.None)) is TileRoad neighbor == false) {
                 continue;
             }
             if (neighbor.Facing == TrafficUtilities.ReverseDirections(tile.Facing)) { // Facing opposite
@@ -44,7 +44,7 @@ public class RoadUtils
                 continue;
             }
             if (neighbor.Facing == adjacents[i]) { // Facing away
-                if (neighbor.InConnections[tile.Facing] == true) {
+                if (neighbor.Connections.InConnections[(int)tile.Facing] == true) {
                     continue;
                 }
                 tile.AddOutConnection(adjacents[i]);
@@ -58,6 +58,11 @@ public class RoadUtils
                 neighbor.AddOutConnection(TrafficUtilities.ReverseDirections(adjacents[i]));
                 continue;
             }
+            if (TrafficUtilities.ReverseDirections(tile.Facing) == adjacents[i]) { // Neighbor facing this
+                tile.AddInConnection(adjacents[i]);
+                neighbor.AddOutConnection(TrafficUtilities.ReverseDirections(adjacents[i]));
+                continue;
+            }
         }
 
         SetLines(tile);
@@ -65,17 +70,17 @@ public class RoadUtils
 
     public void SetLines(TileRoad tile) {
         HashSet<Direction> connections = new();
-        foreach (var con in tile.InConnections) {
-            if (con.Value == false) {
+        for (int i = 0; i < tile.Connections.InConnections.Length; i++) {
+            if (tile.Connections.InConnections[i] == false) {
                 continue;
             }
-            connections.Add(con.Key);
+            connections.Add((Direction)i);
         }
-        foreach (var con in tile.OutConnections) {
-            if (con.Value == false) {
+        for (int i = 0; i < tile.Connections.OutConnections.Length; i++) {
+            if (tile.Connections.OutConnections[i] == false) {
                 continue;
             }
-            connections.Add(con.Key);
+            connections.Add((Direction)i);
         }
 
         foreach (Direction dir in Enum.GetValues(typeof(Direction))) {
@@ -83,19 +88,29 @@ public class RoadUtils
                 continue;
             }
 
-            if (tile.NeighborSystem.Neighbors[(dir, Direction.None)].Tile is TileRoad neighbor == false) {
+            if (tile.NeighborSystem.GetNeighborTile((dir, Direction.None)) is TileRoad neighbor == false) {
                 tile.ToggleLine(dir, true); // Roadside
                 tile.SetLineType(dir, DirectionSeparatorWhole);
                 continue;
             }
 
-            if (tile.OutConnections[dir] == true && tile.InConnections[dir] == true) {
+            if (tile.Connections.OutConnections[(int)dir] == true && tile.Connections.InConnections[(int)dir] == true) {
                 tile.SetLineType(dir, LaneSeparatorDotted);
                 tile.ToggleLine(dir, true);
                 continue;
             }
 
-            if (tile.OutConnections[dir] == false && tile.InConnections[dir] == false) {
+            if (tile.Connections.OutConnections[(int)dir] == false && tile.Connections.InConnections[(int)dir] == true) {
+                tile.ToggleLine(dir, false);
+                continue;
+            }
+
+            if (tile.Connections.OutConnections[(int)dir] == true && tile.Connections.InConnections[(int)dir] == false) {
+                tile.ToggleLine(dir, false);
+                continue;
+            }
+
+            if (tile.Connections.OutConnections[(int)dir] == false && tile.Connections.InConnections[(int)dir] == false) {
                 tile.SetLineType(dir, DirectionSeparatorWhole);
                 tile.ToggleLine(dir, true);
                 continue;
@@ -115,7 +130,7 @@ public class RoadUtils
             bool roadEnd = false;
             while (roadEnd == false) {
                 roadToSetCrosswalk.Add(currentRoad);
-                if (currentRoad.NeighborSystem.Neighbors[(flankDirections[i], Direction.None)].Tile is TileRoad nextRoad) {
+                if (currentRoad.NeighborSystem.GetNeighborTile((flankDirections[i], Direction.None)) is TileRoad nextRoad) {
                     currentRoad = nextRoad;
                 }
                 else {
@@ -126,13 +141,15 @@ public class RoadUtils
 
         foreach (TileRoad tileToAddCw in roadToSetCrosswalk) {
             tileToAddCw.ToggleCrosswalk(addCrosswalk);
-            if (tileToAddCw.NeighborSystem.Neighbors[(TrafficUtilities.ReverseDirections(tileToAddCw.Facing), Direction.None)].Tile is TileRoad stopTile) {
-                stopTile.SetLineType(tile.Facing, StopLine);
-                stopTile.ToggleLine(tile.Facing, addCrosswalk);
+            if (tileToAddCw.NeighborSystem.GetNeighborTile((TrafficUtilities.ReverseDirections(tileToAddCw.Facing), Direction.None)) is TileRoad stopTile) {
+                if (stopTile.Connections.OutConnections.Sum(x => x == true ? 1 : 0) < 2) {
+                    stopTile.SetLineType(tileToAddCw.Facing, StopLine);
+                    stopTile.ToggleLine(tileToAddCw.Facing, addCrosswalk);
+                }
             }
             SetLines(tileToAddCw);
         }
-          
+
         return;
     }
 
@@ -167,12 +184,12 @@ public class RoadUtils
         };
 
         Direction[] flanks = TrafficUtilities.GetFlankDirections(tile.Facing);
-        Direction up = tile.Facing;
+        Direction forward = tile.Facing;
         Direction left = flanks[0];
         Direction right = flanks[1];
 
         Dictionary<Direction, bool> modifiedSides = new() {
-            { up, false },
+            { forward, false },
             { left, false },
             { right, false },
         };
@@ -196,18 +213,18 @@ public class RoadUtils
 
         switch (tile.ConnectionIndex) {
             case 0:
-                outDirs[up] = true;
+                outDirs[forward] = true;
                 break;
             case 1:
-                outDirs[up] = true;
+                outDirs[forward] = true;
                 outDirs[left] = true;
                 break;
             case 2:
-                outDirs[up] = true;
+                outDirs[forward] = true;
                 outDirs[right] = true;
                 break;
             case 3:
-                outDirs[up] = true;
+                outDirs[forward] = true;
                 outDirs[left] = true;
                 outDirs[right] = true;
                 break;
@@ -228,7 +245,7 @@ public class RoadUtils
 
         foreach (var kvp in outDirs) {
             Direction dir = TrafficUtilities.ReverseDirections(kvp.Key);
-            if (tile.NeighborSystem.Neighbors[(kvp.Key, Direction.None)].Tile is TileRoad tileRoad == false) {
+            if (tile.NeighborSystem.GetNeighborTile((kvp.Key, Direction.None)) is TileRoad tileRoad == false) {
                 continue;
             }
 
@@ -255,25 +272,25 @@ public class RoadUtils
 
         for (int i = 0; i < tilesToCheck; i++) {
             foreach (Direction dir in flanks) {
-                if (currentTile.NeighborSystem.Neighbors[(dir, Direction.None)].Tile is TileRoad flankTile) {
-                    if (currentTile.OutConnections[dir] == false) {
+                if (currentTile.NeighborSystem.GetNeighborTile((dir, Direction.None)) is TileRoad flankTile) {
+                    if (currentTile.Connections.OutConnections[(int)dir] == false) {
                         continue;
                     }
-                    if (flankTile.OutConnections[TrafficUtilities.ReverseDirections(dir)] == true) {
+                    if (flankTile.Connections.OutConnections[(int)TrafficUtilities.ReverseDirections(dir)] == true) {
                         continue;
                     }
                     arrowDirs.Add(dir);
-                    if (currentTile.OutConnections[tile.Facing] == true) {
+                    if (currentTile.Connections.OutConnections[(int)tile.Facing] == true) {
                         arrowDirs.Add(tile.Facing);
                     }
                 }
             }
-            if (currentTile.NeighborSystem.Neighbors[(tile.Facing, Direction.None)].Tile is TileRoad nextTile) {
+            if (currentTile.NeighborSystem.GetNeighborTile((tile.Facing, Direction.None)) is TileRoad nextTile) {
                 currentTile = nextTile;
                 continue;
             }
             break;
-        } 
+        }
 
         if (arrowDirs.Count == 0) {
             arrowDirs.Add(tile.Facing);
@@ -309,7 +326,7 @@ public class RoadUtils
             bool roadEnd = false;
             while (roadEnd == false) {
                 roadToModify.Add(currentRoad);
-                if (currentRoad.NeighborSystem.Neighbors[(flankDirections[i], Direction.None)].Tile is TileRoad nextRoad) {
+                if (currentRoad.NeighborSystem.GetNeighborTile((flankDirections[i], Direction.None)) is TileRoad nextRoad) {
                     currentRoad = nextRoad;
                 }
                 else {
@@ -320,7 +337,7 @@ public class RoadUtils
 
         foreach (TileRoad tileToMod in roadToModify) {
             if (addTrafficLight) {
-                if(trafficLight == null) {
+                if (trafficLight == null) {
                     trafficLight = GameObject.Instantiate<TrafficLight>(GridManager.TileList.TrafficLight, tileToMod.transform);
                     trafficLight.Initialize(tileToMod);
                 }

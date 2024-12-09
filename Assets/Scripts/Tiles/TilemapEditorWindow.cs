@@ -10,7 +10,6 @@ public class TilemapEditorWindow : EditorWindow
 
     private int m_SelectedTileIndex = 0;
     private int m_CursorTileIndexOld = 1;
-
     private TilemapEditor Editor { get; set; } = null;
 
     // Edit
@@ -36,8 +35,6 @@ public class TilemapEditorWindow : EditorWindow
     private int m_TileModType = 0;
     private int m_TileModTypeOld = 1;
     private string[] m_TileModTypes = null;
-
-
 
     private Vector2 m_ScrollPosition = Vector2.zero;
 
@@ -91,14 +88,11 @@ public class TilemapEditorWindow : EditorWindow
         Controls();
 
         m_ScrollPosition = GUILayout.BeginScrollView(m_ScrollPosition, false, true);
-
         TileModification();
         DecorativeLayers();
         LayerToEdit();
         TileSelector();
-
         GUILayout.EndScrollView();
-
     }
 
     private void LayerToEdit() {
@@ -244,7 +238,7 @@ public class TilemapEditorWindow : EditorWindow
 
         if (Event.current.type == EventType.MouseDown) {
             if (Event.current.keyCode == KeyCode.Mouse0) {
-                if(m_SecondaryEdit == false) {
+                if (m_SecondaryEdit == false) {
                     Editor.EditTile(true);
                     return;
                 }

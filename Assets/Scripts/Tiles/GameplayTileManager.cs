@@ -26,9 +26,12 @@ public class GameplayTileManager<T> where T : Tile
     public List<T> AddTiles() {
         void AddNewTile(T tile) {
             Debug.Log("added tile " + typeof(T));
+            tile.Initialize(tile.Data, tile.GridPosition);
+            //tile.NeighborSystem = new(tile);
             TilesByGridpos.Add(tile.GridPosition, tile);
             TileManager.AllTilesByGridpos.Add(tile.GridPosition, tile);
-            TileManager.GameplayTilecount++;
+            TileManager.GameplayTileCount++;
+            TileCount++;
         }
 
         T[] list = TileContainer.GetComponentsInChildren<T>(true).ToArray();
@@ -70,7 +73,7 @@ public class GameplayTileManager<T> where T : Tile
         TileManager.AllTilesByGridpos[tile.GridPosition] = null;
         GameObject.DestroyImmediate(tile.gameObject);
         TileCount--;
-        TileManager.GameplayTilecount--;
+        TileManager.GameplayTileCount--;
     }
 
     public void ReturnTile(Vector2Int pos) {
@@ -95,7 +98,7 @@ public class GameplayTileManager<T> where T : Tile
         tile = UnityEngine.Object.Instantiate(TilePrefab.gameObject, TileContainer).GetComponent<T>();
 
         TileCount++;
-        TileManager.GameplayTilecount++;
+        TileManager.GameplayTileCount++;
 
         Tiles.Add(tile);
         if (TilesByGridpos.ContainsKey(gridPosition) == true) {

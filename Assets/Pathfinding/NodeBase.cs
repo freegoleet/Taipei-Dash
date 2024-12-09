@@ -1,5 +1,6 @@
 using UnityEngine;
 
+
 public abstract class NodeBase : MonoBehaviour
 {
     private NodeBase m_Connection = null;

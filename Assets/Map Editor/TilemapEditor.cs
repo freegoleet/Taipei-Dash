@@ -4,25 +4,6 @@ using UnityEngine;
 
 namespace Traffic
 {
-    public enum TileType
-    {
-        Gameplay,
-        Road,
-        Autofit,
-        Deco,
-        None
-    }
-
-    public enum TileModType
-    {
-        Placement,
-        Connections,
-        Crosswalk,
-        Stopline,
-        TrafficLight,
-        Pointer
-    }
-
     [ExecuteInEditMode]
     public class TilemapEditor : MonoBehaviour
     {
@@ -33,6 +14,8 @@ namespace Traffic
         private TilemapCursor m_TilemapCursor = null;
         [SerializeField]
         private UI_Neighbors m_Neighbors = null;
+        [SerializeField]
+        private UI_Connections m_Connections = null;
 
         public Direction[] Directions = { Direction.Left, Direction.Right, Direction.Up, Direction.Down };
 
@@ -56,6 +39,7 @@ namespace Traffic
         public GridManager GridManager { get => m_GridManager; }
         public GameObject HoverOverlay { get; private set; } = null;
         public UI_Neighbors UI_Neighbors { get { return m_Neighbors; } }
+        public UI_Connections UI_Connections { get { return m_Connections; } }
         public Texture2D[] Textures { get; private set; } = null;
         public int LayerToEdit { get; private set; } = 0;
         public bool ShowPointer { get; private set; } = false;
@@ -88,12 +72,24 @@ namespace Traffic
             if (TilemapCursor.GetCurrentCursorTile() is Tile cursorTile == false) {
                 return;
             }
-            if (tile.Data == cursorTile) {
+            if(tile is TileRoad tileRoad) {
+                Direction[] dirs = new Direction[4];
+                for (int i = 0; i < tileRoad.Connections.OutConnections.Length; i++) {
+                    if (tileRoad.Connections.OutConnections[i] == true) {
+                        dirs[i] = (Direction)i;
+                        continue;
+                    }
+                    dirs[i] = Direction.None;
+                }
+                UI_Connections.ShowConnections(dirs);
+            }
+            if (tile.Data == cursorTile.Data) {
                 UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllFittableNeighbors());
             }
             else {
                 UI_Neighbors.ShowNeighbors(tile.NeighborSystem.GetAllUnfittableNeighbors());
             }
+            
         }
 
         public void ToggleShowConnections(bool show) {
@@ -198,6 +194,7 @@ namespace Traffic
             Textures = new Texture2D[SOGameplayTiles.Count];
             OnNewCursorTile = SelectNewTileType;
             UI_Neighbors.Initialize();
+            UI_Connections.Initialize();
 
             for (int i = 0; i < SOGameplayTiles.Count; i++) {
                 TileGUI newTile = new TileGUI();

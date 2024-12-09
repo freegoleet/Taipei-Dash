@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using Traffic;
 using UnityEngine;
@@ -20,7 +21,7 @@ public class TileManager
     public TileGameplay GameplayTile { get; private set; } = null;
     public GridManager GridManager { get; private set; } = null;
 
-    public int GameplayTilecount { get; set; } = 0;
+    public int GameplayTileCount { get; set; } = 0;
 
     public TileManager(GridManager gridManager, SOTile_List tileList, Transform activeTileContainer, Transform decoContainer, int decoLayerCount) {
         RoadTile = tileList.RoadTile;
@@ -35,7 +36,6 @@ public class TileManager
         SidewalkTileManager = new GameplayTileManager<TileSidewalk>(TileType.Autofit, tileList.SidewalkTile, activeTileContainer, this);
         RoadTileManager = new GameplayTileManager<TileRoad>(TileType.Road, tileList.RoadTile, activeTileContainer, this);
         GameplayTileManager = new GameplayTileManager<TileGameplay>(TileType.Gameplay, tileList.GameplayTile, activeTileContainer, this);
-        SetupAllTiles();
     }
 
     public void NewGridSize(int size) {
@@ -46,14 +46,8 @@ public class TileManager
         return RoadTileManager.TileCount + SidewalkTileManager.TileCount;
     }
 
-    public List<Tile> GetAllTiles() {
-        List<Tile> tiles = new List<Tile>();
-        tiles.AddRange(SidewalkTileManager.Tiles);
-        tiles.AddRange(RoadTileManager.Tiles);
-        tiles.AddRange(DecoTileManager.AllTiles);
-        tiles.AddRange(GameplayTileManager.Tiles);
-
-        return tiles;
+    public Tile[] GetAllTiles() {
+        return AllTiles;
     }
 
     public List<TileGameplay> GetAllGameplayTiles() {
@@ -61,12 +55,8 @@ public class TileManager
         tiles.AddRange(SidewalkTileManager.Tiles);
         tiles.AddRange(RoadTileManager.Tiles);
         tiles.AddRange(GameplayTileManager.Tiles);
-
+        tiles.OrderBy(tile => tile.GridPosition.x);
         return tiles;
-    }
-
-    public Tile[] GetAllActiveGameplayTiles() {
-        return AllTiles;
     }
 
     public Tile ReplaceTile(Tile oldTile, TileType newTileType) {
@@ -130,25 +120,29 @@ public class TileManager
         GameplayTileManager.DestroyAllTiles();
         AllTilesByGridpos.Clear();
         AllTiles = null;
-        GameplayTilecount = 0;
+        GameplayTileCount = 0;
     }
 
-    private void SetupAllTiles() {
+    public void SetupAllTiles() {
         List<Tile> tiles = new List<Tile>();
         tiles.AddRange(RoadTileManager.AddTiles());
         tiles.AddRange(SidewalkTileManager.AddTiles());
         tiles.AddRange(GameplayTileManager.AddTiles());
-        tiles.OrderBy(tile => tile.GridPosition.x);
-        AllTiles = tiles.ToArray();
+        for (int i = 0; i < tiles.Count; i++) {
+            int col = tiles[i].Col;
+            int row = tiles[i].Row;
+            AllTiles[col + row * GridManager.Rows] = tiles[i];
+        }
+        for (int i = 0; i < AllTiles.Length; i++) {
+            Tile t = AllTiles[i];
+            GridManager.SetNeighbors(t);
+            SetTileNeighbors(t.NeighborSystem);
+        }
     }
 
-    public List<NeighborSystem> SetupTileNeighbors(Tile tile, bool original) {
-        List<NeighborSystem> tiles = SetTileNeighbors(tile.NeighborSystem);
-        List<NeighborSystem> newList = new();
-
-        if(tile.GridPosition == new Vector2Int(1, 0)) {
-            Debug.Log("me");
-        }
+    public HashSet<NeighborSystem> SetupTileNeighbors(Tile tile, bool original) {
+        HashSet<NeighborSystem> tiles = SetTileNeighbors(tile.NeighborSystem);
+        HashSet<NeighborSystem> newList = new();
 
         if (original == false) {
             return tiles;
@@ -156,15 +150,11 @@ public class TileManager
 
         foreach (NeighborSystem tileAutofit in tiles) {
             if (original == true) {
-                newList.AddRange(SetupTileNeighbors(tileAutofit.Tile, false));
+                newList.UnionWith(SetupTileNeighbors(tileAutofit.Tile, false));
             }
         }
 
-        foreach (NeighborSystem tileAutofit in tiles) {
-            newList.Remove(tileAutofit);
-        }
-
-        newList = newList.GroupBy(x => x.Tile.GridPosition).Select(y => y.First()).ToList();
+        newList = newList.GroupBy(x => x.Tile.GridPosition).Select(something => something.First()).ToHashSet();
 
         foreach (NeighborSystem neighbor in newList) {
             if(neighbor.Tile is TileAutofit taf) {
@@ -178,12 +168,12 @@ public class TileManager
         return newList;
     }
 
-    private List<NeighborSystem> SetTileNeighbors(NeighborSystem tile) {
-        List<NeighborSystem> neighbors = new List<NeighborSystem> {
+    private HashSet<NeighborSystem> SetTileNeighbors(NeighborSystem tile) {
+        HashSet<NeighborSystem> neighbors = new HashSet<NeighborSystem> {
             tile
         };
 
-        foreach (KeyValuePair<(Direction, Direction), Neighbor> pair in tile.Neighbors) {
+        foreach (KeyValuePair<(Direction, Direction), Neighbor> pair in tile.GetAllNeighbors()) {
             if (pair.Value.Tile == null) {
                 continue;
             }
@@ -193,10 +183,10 @@ public class TileManager
                 fittable = !fittable;
             }
 
-            tile.Neighbors[pair.Key].Fittable = fittable;
+            tile.GetNeighbor(pair.Key).Fittable = fittable;
 
-            neighbors.Add(tile.Neighbors[pair.Key].Tile.NeighborSystem);
-            tile.Neighbors[pair.Key].Tile.NeighborSystem.Neighbors[TrafficUtilities.ReverseDirections(pair.Key)].Fittable = fittable;
+            neighbors.Add(tile.GetNeighborTile(pair.Key).NeighborSystem);
+            tile.GetNeighborTile(pair.Key).NeighborSystem.GetNeighbor(TrafficUtilities.ReverseDirections(pair.Key)).Fittable = fittable;
         }
 
         return neighbors;

@@ -47,33 +47,23 @@ public class TileRoad : TileGameplay
     public int ConnectionIndex { get; set; } = 0;
     public TrafficLight TrafficLight { get; private set; } = null;
     public RoadtileNeighbors RoadtileNeighbors { get; private set; } = null;
+    public Connections Connections { get; private set; } = new Connections(4);
     public bool GreenLit { get; set; } = true;
 
-    public Dictionary<Direction, bool> InConnections { get; set; } = new Dictionary<Direction, bool>() {
-        { Direction.Up, false },
-        { Direction.Down, false },
-        { Direction.Left, false },
-        { Direction.Right, false },
-    };
-
-    public Dictionary<Direction, bool> OutConnections { get; set; } = new Dictionary<Direction, bool>() {
-        { Direction.Up, false },
-        { Direction.Down, false },
-        { Direction.Left, false },
-        { Direction.Right, false },
-    };
-
-    private Dictionary<Direction, bool> Lines { get; set; } = new() {
-        { Direction.Up, false },
-        { Direction.Down, false },
-        { Direction.Left, false },
-        { Direction.Right, false },
-    };
+    private Dictionary<Direction, bool> Lines { get; set; } = null;
 
     public override void Initialize(SO_Tile data, Vector2Int gridPos, bool cursor = false) {
         base.Initialize(data, gridPos, cursor);
         RoadtileNeighbors = new RoadtileNeighbors(this);
         Pointer.ToggleShow(false);
+        if (Lines == null) {
+            Lines = new() {
+                { Direction.Up, false },
+                { Direction.Down, false },
+                { Direction.Left, false },
+                { Direction.Right, false },
+            };
+        }
     }
 
     public void ToggleShowConnections(bool show) {
@@ -108,7 +98,7 @@ public class TileRoad : TileGameplay
         Crosswalk.gameObject.SetActive(show);
         SetCrosswalkDir(Facing);
 
-        if(show == true) {
+        if (show == true) {
             ToggleLine(Direction.Up, false);
             ToggleLine(Direction.Down, false);
             ToggleLine(Direction.Left, false);
@@ -175,7 +165,7 @@ public class TileRoad : TileGameplay
     }
 
     public void ToggleLine(Direction dir, bool show) {
-        if(HasCrosswalk == true && show == true) {
+        if (HasCrosswalk == true && show == true) {
             return;
         }
 
@@ -200,64 +190,47 @@ public class TileRoad : TileGameplay
     }
 
     public void AddInConnection(Direction connection) {
-        if (InConnections.ContainsKey(connection) == false) {
-            return;
-        }
-        if (InConnections[connection] == true) {
-            return;
-        }
-
-        InConnections[connection] = true;
+        Connections.AddInConnection(connection);
         UpdateDebugDirections();
     }
 
     public void AddOutConnection(Direction connection) {
-        if (OutConnections.ContainsKey(connection) == false) {
-            return;
-        }
-        if (OutConnections[connection] == true) {
-            return;
-        }
-        OutConnections[connection] = true;
+        Connections.AddOutConnection(connection);
         UpdateDebugDirections();
     }
 
     public void RemoveInConnection(Direction connection) {
-        if (InConnections.ContainsKey(connection) == false) {
-            return;
-        }
-        if (InConnections[connection] == false) {
-            return;
-        }
-        InConnections[connection] = false;
+        Connections.RemoveInConnection(connection);
         UpdateDebugDirections();
     }
 
     public void RemoveOutConnection(Direction connection) {
-        if (OutConnections.ContainsKey(connection) == false) {
-            return;
-        }
-        if (OutConnections[connection] == false) {
-            return;
-        }
-        OutConnections[connection] = false;
+        Connections.RemoveOutConnection(connection);
         UpdateDebugDirections();
     }
 
     public void SetOutConnections(Dictionary<Direction, bool> connections) {
-        OutConnections = connections;
+        foreach (var item in connections) {
+            if (item.Value == true) {
+                AddOutConnection(item.Key);
+                continue;
+            }
+            RemoveOutConnection(item.Key);
+        }
         UpdateDebugDirections();
     }
 
     public void UpdateDebugDirections() {
-        bool showDir = false;
-        foreach (var inCons in InConnections) {
-            foreach (var outCons in OutConnections) {
-                showDir = false;
-                if (inCons.Value == true && outCons.Value == true) {
+        for (int i = 0; i < Connections.InConnections.Length; i++) {
+            for (int j = 0; j < Connections.OutConnections.Length; j++) {
+                if ((Direction)i == (Direction)j) {
+                    continue;
+                }
+                bool showDir = false;
+                if (Connections.InConnections[i] == Connections.OutConnections[j]) {
                     showDir = true;
                 }
-                DebugDirections.ToggleDebugDirection(inCons.Key, outCons.Key, showDir);
+                DebugDirections.ToggleDebugDirection((Direction)i, (Direction)j, showDir);
             }
         }
     }

@@ -27,9 +27,9 @@ public class GridManager : MonoBehaviour
     [SerializeField]
     private int m_Walls = 10;
 
-    public Action<List<Tile>> OnMapGenerated = null;
-    public TileManager TileManager { get; private set; } = null;
+    public Action<Tile[]> OnMapGenerated = null;
 
+    public TileManager TileManager { get; private set; } = null;
     public int TileSize { get => m_TileSize; }
     public int Rows { get => m_Rows; }
     public int Cols { get => m_Cols; }
@@ -51,6 +51,7 @@ public class GridManager : MonoBehaviour
 
     public void SetupManager() {
         TileManager = new TileManager(this, TileList, ActiveTileContainer, DecorativeTileContainer, Rows);
+        TileManager.SetupAllTiles();
     }
 
     public Vector2 GetGridCameraOffset() {
@@ -108,22 +109,12 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        for (int i = 0; i < TileManager.GameplayTilecount; i++) {
+        for (int i = 0; i < TileManager.GameplayTileCount; i++) {
             Tile t = TileManager.AllTiles[i];
             SetNeighbors(t);
         }
 
-        //for (int i = 0; i < TileManager.GameplayTilecount; i++) {
-        //    TileAutofit autofitTile = TileManager.SidewalkTileManager.AllTiles[i];
-        //    var neighbors = GetNeighbors(autofitTile);
-        //    for (int j = 0; j < neighbors.Length; j++) {
-        //        if (neighbors[j] != null) {
-        //            autofitTile.AutofitNeighbors.SetFittableNeighborExists(j, true);
-        //        }
-        //    }
-        //}
-
-        for (int i = 0; i < TileManager.GameplayTilecount; i++) {
+        for (int i = 0; i < TileManager.GameplayTileCount; i++) {
             TileManager.SetupTileNeighbors(TileManager.GetAllGameplayTiles()[i], false);
         }
 
@@ -158,33 +149,42 @@ public class GridManager : MonoBehaviour
             if (neighbors[i] == null) {
                 continue;
             }
-            Tile neighboringTile = (Tile)neighbors[i];
-            switch (i) {
-                case 0: // Up
-                    tile.NeighborSystem.Neighbors[(Direction.Up, Direction.None)].Tile = neighboringTile;
-                    if(setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Down, Direction.None)].Tile = tile;
-                    }
-                    break;
-                case 1: // Down
-                    tile.NeighborSystem.Neighbors[(Direction.Down, Direction.None)].Tile = neighboringTile;
-                    if (setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Up, Direction.None)].Tile = tile;
-                    }
-                    break;
-                case 2: // Left
-                    tile.NeighborSystem.Neighbors[(Direction.Left, Direction.None)].Tile = neighboringTile;
-                    if (setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Right, Direction.None)].Tile = tile;
-                    }
-                    break;
-                case 3: // Right
-                    tile.NeighborSystem.Neighbors[(Direction.Right, Direction.None)].Tile = neighboringTile;
-                    if (setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Left, Direction.None)].Tile = tile;
-                    }
-                    break;
+            if (tile.GridPosition == new Vector2Int(0,0)) {
+                Debug.Log("hi");
             }
+            Tile neighboringTile = (Tile)neighbors[i];
+
+            tile.NeighborSystem.SetNeighborTile(((Direction)i, Direction.None), neighboringTile);
+            if (setNeighborsNewNeighbor == true) {
+                neighboringTile.NeighborSystem.SetNeighborTile((TrafficUtilities.ReverseDirections((Direction)i), Direction.None), tile);
+            }
+
+            //switch (i) {
+            //    case 0: // Up
+            //        tile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.None), neighboringTile);
+            //        if(setNeighborsNewNeighbor == true) {
+            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.None), tile);
+            //        }
+            //        break;
+            //    case 1: // Down
+            //        tile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.None), neighboringTile);
+            //        if (setNeighborsNewNeighbor == true) {
+            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.None), tile);
+            //        }
+            //        break;
+            //    case 2: // Left
+            //        tile.NeighborSystem.SetNeighborTile((Direction.Left, Direction.None), neighboringTile);
+            //        if (setNeighborsNewNeighbor == true) {
+            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Right, Direction.None), tile);
+            //        }
+            //        break;
+            //    case 3: // Right
+            //        tile.NeighborSystem.SetNeighborTile((Direction.Right, Direction.None), neighboringTile);
+            //        if (setNeighborsNewNeighbor == true) {
+            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Left, Direction.None), tile);
+            //        }
+            //        break;
+            //}
         }
         
         neighbors = GetDiagonalNeighbors(tile);
@@ -195,27 +195,27 @@ public class GridManager : MonoBehaviour
             Tile neighboringTile = (Tile)neighbors[i];
             switch (i) {
                 case 0: // Up-Left
-                    tile.NeighborSystem.Neighbors[(Direction.Up, Direction.Left)].Tile = neighboringTile;
+                    tile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.Left), neighboringTile);
                     if (setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Down, Direction.Right)].Tile = tile;
+                        neighboringTile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.Right), tile);
                     }
                     break;
-                case 1: // Up_Right
-                    tile.NeighborSystem.Neighbors[(Direction.Up, Direction.Right)].Tile = neighboringTile;
+                case 1: // Up-Right
+                    tile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.Right), neighboringTile);
                     if (setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Down, Direction.Left)].Tile = tile;
+                        neighboringTile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.Left), tile);
                     }
                     break;
                 case 2: // Down-Left
-                    tile.NeighborSystem.Neighbors[(Direction.Down, Direction.Left)].Tile = neighboringTile;
+                    tile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.Left), neighboringTile);
                     if (setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Up, Direction.Right)].Tile = tile;
+                        neighboringTile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.Right), tile);
                     }
                     break;
                 case 3: // Down-Right
-                    tile.NeighborSystem.Neighbors[(Direction.Down, Direction.Right)].Tile = neighboringTile;
+                    tile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.Right), neighboringTile);
                     if (setNeighborsNewNeighbor == true) {
-                        neighboringTile.NeighborSystem.Neighbors[(Direction.Up, Direction.Left)].Tile = tile;
+                        neighboringTile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.Left), tile);
                     }
                     break;
             }
@@ -276,11 +276,11 @@ public class GridManager : MonoBehaviour
     public NodeBase[] GetAdjacentNeighbors(NodeBase node) {
         NodeBase[] neighbors = new NodeBase[4];
 
-        NodeBase[] tiles = TileManager.GetAllActiveGameplayTiles();
+        NodeBase[] tiles = TileManager.GetAllTiles();
 
         int index = Array.IndexOf(tiles, node) + 1;
 
-        if (index + Cols <= TileManager.GameplayTilecount) // Up
+        if (index + Cols <= TileManager.GameplayTileCount) // Up
         {
             neighbors[0] = tiles[index - 1 + Cols];
         }
@@ -311,12 +311,12 @@ public class GridManager : MonoBehaviour
     public NodeBase[] GetDiagonalNeighbors(NodeBase node) {
         NodeBase[] neighbors = new NodeBase[4];
 
-        NodeBase[] tiles = TileManager.GetAllActiveGameplayTiles().ToArray<NodeBase>();
+        NodeBase[] tiles = TileManager.GetAllTiles();
 
         int index = Array.IndexOf(tiles, node) + 1;
 
         if (index % Cols != 0) { // Right
-            if (index + Cols <= TileManager.GameplayTilecount) // Up
+            if (index + Cols <= TileManager.GameplayTileCount) // Up
             {
                 neighbors[1] = tiles[index + Cols];
             }
@@ -329,7 +329,7 @@ public class GridManager : MonoBehaviour
 
         if ((index - 1) % Cols != 0) // Left
         {
-            if (index + Cols <= TileManager.GameplayTilecount) // Up
+            if (index + Cols <= TileManager.GameplayTileCount) // Up
             {
                 neighbors[0] = tiles[index - 2 + Cols];
             }
@@ -342,8 +342,6 @@ public class GridManager : MonoBehaviour
 
         return neighbors;
     }
-
-
 
     public float GetDistance(NodeBase from, NodeBase to) {
         return Mathf.Abs(to.Col - from.Col) + Mathf.Abs(to.Row - from.Row);

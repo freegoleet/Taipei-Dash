@@ -36,7 +36,6 @@ public class GameService : MonoBehaviour
             DestroyImmediate(this);
             return;
         }
-
         m_Instance = this;
     }
 

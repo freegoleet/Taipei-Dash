@@ -28,15 +28,15 @@ public class RoadtileNeighbors
     }
 
     public bool IsNeighborFacingThis(Direction directionToNeighbor) {
-        Tile tile = Tile.NeighborSystem.Neighbors[(directionToNeighbor, Direction.None)].Tile;
-        if (Tile == tile.NeighborSystem.Neighbors[(tile.Facing, Direction.None)].Tile) {
+        Tile tile = Tile.NeighborSystem.GetNeighborTile((directionToNeighbor, Direction.None));
+        if (Tile == tile.NeighborSystem.GetNeighborTile((tile.Facing, Direction.None))) {
             return true;
         }
         return false;
     }
 
     public bool IsNeighborFacingOpposite(Direction directionToNeighbor) {
-        Tile tile = Tile.NeighborSystem.Neighbors[(directionToNeighbor, Direction.None)].Tile;
+        Tile tile = Tile.NeighborSystem.GetNeighborTile((directionToNeighbor, Direction.None));
         if(TrafficUtilities.ReverseDirections((Tile.Facing, Direction.None)).Item1 == tile.Facing) {
             return true;
         }
@@ -44,7 +44,7 @@ public class RoadtileNeighbors
     }
 
     public bool IsNeighborFacingAway(Direction directionToNeighbor) {
-        if (Tile.NeighborSystem.Neighbors[(directionToNeighbor, Direction.None)].Tile.Facing == directionToNeighbor) {
+        if (Tile.NeighborSystem.GetNeighborTile((directionToNeighbor, Direction.None)).Facing == directionToNeighbor) {
             return true;
         }
         return false;

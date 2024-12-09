@@ -1,14 +1,21 @@
 using System;
 using System.Collections.Generic;
+using Traffic;
 using UnityEngine;
 
 public static class Pathfinder
 {
     private static bool m_StepThrough = false;
-    private static List<TileGameplay> m_ToSearch = null;
-    private static List<Tile> m_Processed = null;
-    private static Vector2 m_LastDirection = Vector2.zero;
     private static List<Tile> m_AStarvalues = new();
+
+    public struct PathfindData
+    {
+        public TileGameplay StartTile;
+        public TileGameplay TargetTile;
+        public SO_Entity.ePathfindType PathfindType;
+        public List<Tile> ProcessedTiles;
+        public List<TileGameplay> ToSearch;
+    }
 
     public static void ToggleStepThrough(bool active) {
         m_StepThrough = active;
@@ -22,37 +29,9 @@ public static class Pathfinder
         m_AStarvalues.Clear();
     }
 
-    //public static HashSet<TileGameplay> StepThrough(TileGameplay startNode, TileGameplay targetNode, GridManager gridManager) {
-    //    if (startNode == null) {
-    //        return null;
-    //    }
+    public static List<TileGameplay> Automatic(TileGameplay startTile, TileGameplay targetNode, SO_Entity.ePathfindType pathfindType, GridManager gridManager) {
 
-    //    if (targetNode == null) {
-    //        return null;
-    //    }
-
-    //    if (m_ToSearch == null) {
-    //        m_ToSearch = new() { startNode };
-    //    }
-    //    else if (m_ToSearch.Count == 0) {
-    //        m_ToSearch.Add(startNode);
-    //    }
-
-    //    if (m_Processed == null) {
-    //        m_Processed = new();
-    //    }
-
-    //    HashSet<TileGameplay> path = null;
-    //    while (path == null) {
-    //        path = FindPath(startNode, targetNode, gridManager);
-    //    }
-
-    //    return path;
-    //}
-
-    public static HashSet<TileGameplay> Automatic(TileGameplay startNode, TileGameplay targetNode, SO_Entity.ePathfindType pathfindType, GridManager gridManager) {
-
-        if (startNode == null) {
+        if (startTile == null) {
             return null;
         }
 
@@ -60,16 +39,21 @@ public static class Pathfinder
             return null;
         }
 
-        m_ToSearch = new() { startNode };
-
-        startNode.SetH(int.MaxValue);
-        m_Processed = new();
+        startTile.SetH(int.MaxValue);
 
         int repeats = 100;
 
-        HashSet<TileGameplay> path = null;
+        List<TileGameplay> path = null;
+
+        PathfindData data = new PathfindData();
+        data.StartTile = startTile;
+        data.TargetTile = targetNode;
+        data.PathfindType = pathfindType;
+        data.ProcessedTiles = new();
+        data.ToSearch = new() { data.StartTile };
+
         while (path == null && repeats > 0) {
-            path = FindPath(startNode, targetNode, gridManager);
+            path = FindPath(data, gridManager);
             repeats--;
         }
 
@@ -81,16 +65,18 @@ public static class Pathfinder
         return path;
     }
 
-    private static HashSet<TileGameplay> FindPath(TileGameplay startNode, TileGameplay targetNode, GridManager gridManager) {
-        if (m_ToSearch.Count == 0) {
+    private static List<TileGameplay> FindPath(PathfindData data, GridManager gridManager) {
+        Vector2 lastDirection = Vector2.zero;
+
+        if (data.ToSearch.Count == 0) {
             return null;
         }
 
-        TileGameplay currentNode = m_ToSearch[0];
+        TileGameplay currentNode = data.ToSearch[0];
 
-        foreach (TileGameplay node in m_ToSearch) {
+        foreach (TileGameplay node in data.ToSearch) {
             if (m_StepThrough == true) {
-                if (node != startNode) {
+                if (node != data.StartTile) {
 
                 }
 
@@ -101,7 +87,7 @@ public static class Pathfinder
             float directionVariationCoef = 0f;
             var direction = gridManager.GetDirection(currentNode, node);
 
-            if (direction == m_LastDirection) {
+            if (direction == lastDirection) {
                 directionVariationCoef = 0.1f;
             }
 
@@ -110,17 +96,15 @@ public static class Pathfinder
             }
         }
 
-        m_LastDirection = gridManager.GetDirection(m_ToSearch[0], currentNode);
+        data.ProcessedTiles.Add(currentNode);
+        data.ToSearch.Remove(currentNode);
 
-        m_Processed.Add(currentNode);
-        m_ToSearch.Remove(currentNode);
-
-        if (currentNode == targetNode) {
-            TileGameplay currentPathTile = targetNode;
-            HashSet<TileGameplay> path = new();
+        if (currentNode == data.TargetTile) {
+            TileGameplay currentPathTile = data.TargetTile;
+            List<TileGameplay> path = new();
             int count = 100;
 
-            while (currentPathTile != startNode) {
+            while (currentPathTile != data.StartTile) {
                 path.Add(currentPathTile);
                 currentPathTile = (TileGameplay)currentPathTile.Connection;
                 count--;
@@ -130,24 +114,34 @@ public static class Pathfinder
                 }
             }
 
-            m_LastDirection = Vector2.zero;
-            m_ToSearch.Clear();
-            m_Processed.Clear();
+            lastDirection = Vector2.zero;
+            data.ToSearch.Clear();
+            data.ProcessedTiles.Clear();
 
             return path;
         }
 
         HashSet<Tile> neighbors = new();
-        if (currentNode is TileRoad tr) {
-            foreach (var kvp in tr.OutConnections) {
-                if (kvp.Value == false) {
-                    continue;
+        if (data.PathfindType == SO_Entity.ePathfindType.Car) {
+            if (currentNode is TileRoad road == true) {
+                for (int i = 0; i < road.Connections.OutConnections.Length; i++) {
+                    if (road.Connections.OutConnections[i] == false) {
+                        continue;
+                    }
+                    neighbors.Add(road.NeighborSystem.GetNeighborTile(((Direction)i, Direction.None)));
                 }
-                neighbors.Add(tr.NeighborSystem.Neighbors[(kvp.Key, Traffic.Direction.None)].Tile);
             }
         }
         else {
-            neighbors = currentNode.NeighborSystem.GetAllFittableAdjacentNeighbors();
+            foreach (Tile tile in currentNode.NeighborSystem.GetAllAdjacentNeighbors()) {
+                if (tile is TileRoad road == false) {
+                    neighbors.Add(tile);
+                    continue;
+                }
+                if (road.HasCrosswalk == true) {
+                    neighbors.Add(road);
+                }
+            }
         }
 
         foreach (TileGameplay neighbor in neighbors) {
@@ -159,11 +153,11 @@ public static class Pathfinder
             //    continue;
             //}
 
-            if (m_Processed.Contains(neighbor) == true) {
+            if (data.ProcessedTiles.Contains(neighbor) == true) {
                 continue;
             }
 
-            bool inSearch = m_ToSearch.Contains(neighbor);
+            bool inSearch = data.ToSearch.Contains(neighbor);
 
             float costToNeighbor = currentNode.G;
 
@@ -172,8 +166,8 @@ public static class Pathfinder
                 neighbor.SetConnection(currentNode);
 
                 if (inSearch == false) {
-                    neighbor.SetH(gridManager.GetDistance(neighbor, targetNode));
-                    m_ToSearch.Add(neighbor);
+                    neighbor.SetH(gridManager.GetDistance(neighbor, data.TargetTile));
+                    data.ToSearch.Add(neighbor);
                 }
             }
         }

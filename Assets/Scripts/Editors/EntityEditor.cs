@@ -12,6 +12,7 @@ public class EntityEditor : MonoBehaviour
 
     public void Tick(float dt) {
 
+
     }
 
     public void SelectTile(TileGameplay tile) {
@@ -26,7 +27,7 @@ public class EntityEditor : MonoBehaviour
         Entity.Initialize(new SO_Entity());
         SelectedTile = tile; 
         SelectedTile.ToggleHighlight(true);
-        Entity.TileGameplay = SelectedTile;
+        Entity.Tile = SelectedTile;
     }
 
     public void SetTargetTile(TileGameplay tile) {
@@ -38,7 +39,7 @@ public class EntityEditor : MonoBehaviour
         SelectedTile.ToggleHighlight(false);
         SelectedTile = null;
         TargetTile = null;
-        Entity.TileGameplay = null;
+        Entity.Tile = null;
         Entity.Pathfinding.ResetPath();
     }
 
@@ -46,6 +47,7 @@ public class EntityEditor : MonoBehaviour
         if (TargetTile == null) {
             return;
         }
-        Entity.Pathfinding.SetPath(PathfindingUtilities.GetPathTiles(SelectedTile, TargetTile, SO_Entity.ePathfindType.Pedestrian, GameService.Instance.GridManager));
+
+        Entity.Pathfinding.SetPath(PathfindingUtilities.GetPathTiles(SelectedTile, TargetTile, SO_Entity.ePathfindType.Car, GameService.Instance.GridManager));
     }
 }

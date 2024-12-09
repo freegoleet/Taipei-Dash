@@ -8,10 +8,10 @@ namespace Traffic
         public Tile Tile { get; private set; }
 
         public NeighborSystem(Tile tile) {
-            Tile = tile;    
+            Tile = tile;
         }
 
-        public Dictionary<(Direction, Direction), Neighbor> Neighbors { get; private set; } = new() {
+        private Dictionary<(Direction, Direction), Neighbor> Neighbors { get; set; } = new() {
             { (Direction.Up, Direction.None), new Neighbor(new Vector2Int(0, 1), null) },
             { (Direction.Down, Direction.None), new Neighbor(new Vector2Int(0, -1), null) },
             { (Direction.Left, Direction.None), new Neighbor(new Vector2Int(-1, 0), null) },
@@ -22,15 +22,31 @@ namespace Traffic
             { (Direction.Down, Direction.Right), new Neighbor(new Vector2Int(1, -1), null) },
         };
 
-        public List<Vector2Int> GetAllNeighbors() {
-            List<Vector2Int> list = new();
-            foreach (Neighbor neighbor in Neighbors.Values) {
-                if (neighbor.Tile == null) {
+        public Neighbor GetNeighbor((Direction, Direction) direction) {
+            return Neighbors[direction];
+        }
+
+        public Dictionary<(Direction, Direction), Neighbor> GetAllNeighbors() {
+            return Neighbors;
+        }
+
+        public Tile GetNeighborTile((Direction, Direction) direction) {
+            return Neighbors[direction].Tile;
+        }
+
+        public void SetNeighborTile((Direction, Direction) direction, Tile tile) {
+            Neighbors[direction].Tile = tile;
+        }
+
+        public HashSet<Tile> GetAllAdjacentNeighbors() {
+            HashSet<Tile> neighbors = new();
+            foreach (KeyValuePair<(Direction, Direction), Neighbor> kvp in Neighbors) {
+                if (kvp.Key.Item2 != Direction.None) {
                     continue;
                 }
-                list.Add(neighbor.RelativeGridPos);
+                neighbors.Add(kvp.Value.Tile);
             }
-            return list;
+            return neighbors;
         }
 
         public List<Vector2Int> GetAllFittableNeighbors() {
@@ -112,6 +128,19 @@ namespace Traffic
                     continue;
                 }
                 if (kvp.Value.Fittable == true) {
+                    neighbors.Add(kvp.Value.Tile);
+                }
+            }
+            return neighbors;
+        }
+
+        public HashSet<Tile> GetAllUnfittableAdjacentNeighbors() {
+            HashSet<Tile> neighbors = new();
+            foreach (KeyValuePair<(Direction, Direction), Neighbor> kvp in Neighbors) {
+                if (kvp.Key.Item2 != Direction.None) {
+                    continue;
+                }
+                if (kvp.Value.Fittable == false) {
                     neighbors.Add(kvp.Value.Tile);
                 }
             }

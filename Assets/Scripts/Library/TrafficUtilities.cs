@@ -12,7 +12,7 @@ namespace Traffic
 
     public enum Direction
     {
-        Up, Right, Down, Left, None
+        Up, Down, Left, Right, None
     }
 
     public enum TrafficLightColor
@@ -20,6 +20,25 @@ namespace Traffic
         Red,
         Yellow,
         Green
+    }
+
+    public enum TileType
+    {
+        Gameplay,
+        Road,
+        Autofit,
+        Deco,
+        None
+    }
+
+    public enum TileModType
+    {
+        Placement,
+        Connections,
+        Crosswalk,
+        Stopline,
+        TrafficLight,
+        Pointer
     }
 
     public static class TrafficUtilities
@@ -98,12 +117,17 @@ namespace Traffic
         /// <param name="currentDirection"></param>
         /// <returns></returns>
         public static Direction GetNextDirection(Direction currentDirection) {
-            int index = (int)currentDirection + 1;
-            if (index >= Enum.GetValues(typeof(Direction)).Length - 1) {
-                index = 0;
+            switch (currentDirection) {
+                case Direction.Up:
+                    return Direction.Right;
+                case Direction.Down:
+                    return Direction.Left;
+                case Direction.Left:
+                    return Direction.Up;
+                case Direction.Right:
+                    return Direction.Down;
             }
-
-            return (Direction)index;
+            return Direction.None;
         }
 
         public static Direction NormalizeRotation(Direction from, Direction to) {
@@ -120,10 +144,14 @@ namespace Traffic
                     return Direction.Right;
                 case -1:
                     return Direction.Left;
-                case 3:
+                case 2:
                     return Direction.Left;
-                case -3:
+                case -2:
                     return Direction.Right;
+                case 3:
+                    return Direction.Right;
+                case -3:
+                    return Direction.Left;
             }
 
             return Direction.None;

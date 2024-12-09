@@ -145,6 +145,9 @@ public class TileSidewalk : TileAutofit
                 SetActiveCurbs(numberOfCurbs);
                 canHaveInnerCorner = false;
                 break;
+            case AutofitType.Middle:
+                ImgFeature.maskInteraction = SpriteMaskInteraction.VisibleOutsideMask;
+                break;
         }
 
         if (autofitType != AutofitType.Bridge) {

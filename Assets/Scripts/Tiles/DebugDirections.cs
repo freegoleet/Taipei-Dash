@@ -26,22 +26,31 @@ public class DebugDirections : MonoBehaviour
     }
 
     public void ToggleDebugDirection(Direction from, Direction to, bool show) {
-        Direction dir = TrafficUtilities.NormalizeRotation(from, to);
-        if(dir == Direction.Down) {
-            dir = Direction.Up;
+        if(from == to) {
+            return;
         }
+
+        //if(show == true) {
+        //    if(from == Direction.Right) {
+        //        if(to == Direction.Up) {
+        //            Debug.Log("he");
+        //        }
+        //    }
+        //}
+
+        Direction newdir = TrafficUtilities.NormalizeRotation(from, to);
         switch (from) {
             case Direction.Up:
-                FromUp.ToggleDirection(dir, show);
+                FromUp.ToggleDirection(newdir, show);
                 break;
             case Direction.Right:
-                FromRight.ToggleDirection(dir, show);
+                FromRight.ToggleDirection(newdir, show);
                 break;
             case Direction.Down:
-                FromDown.ToggleDirection(dir, show);
+                FromDown.ToggleDirection(newdir, show);
                 break;
             case Direction.Left:
-                FromLeft.ToggleDirection(dir, show);
+                FromLeft.ToggleDirection(newdir, show);
                 break;
         }
     }

@@ -9,12 +9,12 @@ public static class PathfindingUtilities
         Pathfinder.ToggleStepThrough(active);
     }
 
-    public static HashSet<TileGameplay> GetPathTiles(TileGameplay startTile, TileGameplay endTile, SO_Entity.ePathfindType pathfindType, GridManager gridManager) {
+    public static List<TileGameplay> GetPathTiles(TileGameplay startTile, TileGameplay endTile, SO_Entity.ePathfindType pathfindType, GridManager gridManager) {
         return Pathfinder.Automatic(startTile, endTile, pathfindType, gridManager);
     }
 
     public static Vector2Int[] GetPathVector2Int(TileGameplay startTile, TileGameplay endTile, SO_Entity.ePathfindType pathfindType, GridManager gridManager) {
-        HashSet<TileGameplay> path = GetPathTiles(startTile, endTile, pathfindType, gridManager);
+        List<TileGameplay> path = GetPathTiles(startTile, endTile, pathfindType, gridManager);
         Vector2Int[] vector2Path = null;
         vector2Path = new Vector2Int[path.Count];
         for (int i = 0; i < vector2Path.Length; i++) {

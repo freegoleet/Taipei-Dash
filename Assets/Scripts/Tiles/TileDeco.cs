@@ -22,7 +22,7 @@ namespace Traffic
             Layer = layer;
         }
 
-        public void SetFacing(Direction direction) {
+        public override void SetFacing(Direction direction) {
             switch (direction) {
                 case Direction.Up:
                     ImgBackground.transform.position.Set(0, 0, 0);

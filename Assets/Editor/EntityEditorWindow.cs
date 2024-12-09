@@ -6,7 +6,6 @@ public class EntityEditorWindow : EditorWindow
 {
     // Buttons
     private float m_ButtonWidth = 140f;
-
     private EntityEditor Editor { get; set; } = null;
     private TilemapEditor TilemapEditor { get; set; } = null;
 
