@@ -1,10 +1,13 @@
 
+using System;
+
 namespace Traffic
 {
+    [Serializable]
     public struct Connections {
         // 0 = Up, 1 = Down, 2 = Left, 3 = Right
-        public bool[] InConnections { get; }
-        public bool[] OutConnections { get; }
+        public bool[] InConnections { get; set; }
+        public bool[] OutConnections { get; set; }
 
         public Connections(int size) {
             InConnections = new bool[size];

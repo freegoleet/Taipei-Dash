@@ -27,6 +27,11 @@ namespace Traffic
         private List<SO_RoadPointer> m_Pointers = new List<SO_RoadPointer>();
         [SerializeField]
         private List<SO_RoadLine> m_Lines = new List<SO_RoadLine>();
+        [SerializeField]
+        private SO_TileRoad m_SOTileRoad = null;
+        [SerializeField]
+        private SO_TileSidewalk m_SOTileSidewalk = null;
+
 
         public TileSidewalk SidewalkTile { get => m_SidewalkTile; }
         public TileRoad RoadTile { get => m_RoadTile; }
@@ -39,6 +44,7 @@ namespace Traffic
         public List<SO_RoadPointer> Pointers { get { return m_Pointers; } }
         public List<SO_RoadLine> Lines { get { return m_Lines; } }
 
+        public Dictionary<LineType, SO_RoadLine> RoadLines = null;
 
         public Dictionary<RoadPointer, SO_RoadPointer> GetPointers() {
             Dictionary<RoadPointer, SO_RoadPointer> pointers = new();
@@ -50,13 +56,14 @@ namespace Traffic
         }
 
         public Dictionary<LineType, SO_RoadLine> GetRoadlines() {
-            Dictionary<LineType, SO_RoadLine> dict = new();
-
-            foreach (var item in Lines) {
-                dict.Add(item.LineType, item);
+            if(RoadLines != null) {
+                return RoadLines;
             }
-
-            return dict;
+            RoadLines = new();
+            foreach (var item in Lines) {
+                RoadLines.Add(item.LineType, item);
+            }
+            return RoadLines;
         }
 
         public NodeBase GetTilePrefab(TileType tileType) {
@@ -84,6 +91,24 @@ namespace Traffic
                 list.Add(GameplayTiles[i]);
             }
             return list;
+        }
+
+        public SO_Tile GetSOByType(TileType tileType) {
+            switch (tileType) {
+                case TileType.Gameplay:
+                    break;
+                case TileType.Road:
+                    return m_SOTileRoad;
+                case TileType.Autofit:
+                    return m_SOTileSidewalk;
+                case TileType.Deco:
+                    break;
+                case TileType.None:
+                    break;
+                default:
+                    break;
+            }
+            return null;
         }
     }
 }

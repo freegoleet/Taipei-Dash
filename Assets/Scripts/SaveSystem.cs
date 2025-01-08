@@ -3,41 +3,48 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Threading;
 using UnityEngine;
 
 namespace Traffic
 {
+    [Serializable]
     public struct TileRoadData
     {
-        public Direction Facing {  get; set; }
-        public Vector2Int Position {  get; set; }
+        public Direction Facing { get; set; }
+        public int Position { get; set; }
         public Connections Connections { get; set; }
+        public Dictionary<Direction, LineType> ManualLines { get; set; }
     }
 
-    public struct TrafficLightData {
-        public TrafficLightData[] SyncedLights { get; set; }
-        public TrafficLightData[] ReverseSyncedLight { get; set; }
-        public int GreenDuration { get; set; }
-        public int YellowDuration { get; set; }
-        public int RedDuration { get; set; }
-        public Vector2Int Position { get; set; }
+    [Serializable]
+    public struct TrafficLightData
+    {
+        public int[] SyncedLightsPos { get; set; }
+        public int[] ReverseSyncedLightPos { get; set; }
+        public float GreenDuration { get; set; }
+        public float YellowDuration { get; set; }
+        public float RedDuration { get; set; }
+        public int Position { get; set; }
     }
 
+    [Serializable]
     public struct LevelData
     {
         public string Name { get; set; }
+        public int Rows { get; set; }
+        public int Columns { get; set; }
         public TileRoadData[] Roads { get; set; }
-        public int[] Crosswalk {  get; set; }
-        public TrafficLightData[] TrafficLight {  get; set; }
+        public int[] Crosswalks { get; set; }
+        public TrafficLightData[] TrafficLights { get; set; }
     }
 
     public class SaveSystem
     {
         public Dictionary<string, LevelData> AllLevels = new();
         public LevelData CurrentLevel { get; private set; } = default;
-        public List<LevelData> LevelData { get; } = new();
 
-        public Action<LevelData> CurrentCharacterChanged = null;
+        public Action<LevelData> CurrentLevelChanged = null;
 
         private string m_SaveFilePath = null;
 
@@ -46,18 +53,19 @@ namespace Traffic
         /// </summary>
         /// <param name="onFinished"> An action that will be invoked when all levels have been loaded. </param>
         public async void GetAllLevels(Action<Dictionary<string, LevelData>> onFinished) {
-            var info = new DirectoryInfo(Application.persistentDataPath);
-            var fileInfo = info.GetFiles();
-
+            DirectoryInfo info = new DirectoryInfo(Application.persistentDataPath);
+            FileInfo[] fileInfo = info.GetFiles();
             AllLevels.Clear();
 
             for (int i = 0; i < fileInfo.Length; i++) {
-                var text = await fileInfo[i].OpenText().ReadToEndAsync();
-                LevelData levelData = LoadLevelFromJson(text);
-                AllLevels.Add(levelData.Name, levelData);
+                using StreamReader reader = File.OpenText(Path.Combine(info.FullName, fileInfo[i].Name));
+                string text = await reader.ReadToEndAsync();
+                AddLevelFromJson(text);
             }
             onFinished?.Invoke(AllLevels);
         }
+
+        CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
 
         /// <summary>
         /// Save the provided level locally.
@@ -66,8 +74,9 @@ namespace Traffic
         /// <param name="onFinished"> An action that will be invoked when the save has completed. </param>
         public async void SaveLevelToJson(LevelData levelData, Action onFinished = null) {
             m_SaveFilePath = Application.persistentDataPath + "/" + levelData.Name + ".json";
-            await File.WriteAllTextAsync(m_SaveFilePath, JsonConvert.SerializeObject(levelData));
-            onFinished?.Invoke();
+
+            using StreamWriter outputFile = new StreamWriter(m_SaveFilePath);
+            await outputFile.WriteAsync(JsonConvert.SerializeObject(levelData));
         }
 
         /// <summary>
@@ -75,9 +84,11 @@ namespace Traffic
         /// </summary>
         /// <param name="jsonData"> The name of the level to get. </param>
         /// <returns></returns>
-        public LevelData LoadLevelFromJson(string jsonData) {
+        public LevelData AddLevelFromJson(string jsonData) {
             LevelData level = JsonConvert.DeserializeObject<LevelData>(jsonData);
-            LevelData.Add(level);
+            if (AllLevels.TryAdd(level.Name, level) == false) {
+                AllLevels[level.Name] = level;
+            }
             return level;
         }
 
@@ -93,11 +104,11 @@ namespace Traffic
             }
         }
 
-        public LevelData SetCurrentLevel(string characterName) {
-            CurrentLevel = AllLevels[characterName];
+        public LevelData SetCurrentLevel(string levelName) {
+            CurrentLevel = AllLevels[levelName];
 
             string s = string.Empty;
-            BindingFlags bindingFlags = 
+            BindingFlags bindingFlags =
                 BindingFlags.Public |
                 BindingFlags.NonPublic |
                 BindingFlags.Instance |
@@ -107,9 +118,9 @@ namespace Traffic
                 s += field.Name + ":" + field.GetValue(CurrentLevel) + ". ";
             }
 
-            Debug.Log(s);
+            //Debug.Log(s);
 
-            CurrentCharacterChanged?.Invoke(CurrentLevel);
+            CurrentLevelChanged?.Invoke(CurrentLevel);
             return CurrentLevel;
         }
     }

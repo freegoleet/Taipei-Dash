@@ -12,7 +12,7 @@ public static class Pathfinder
     {
         public TileGameplay StartTile;
         public TileGameplay TargetTile;
-        public SO_Entity.ePathfindType PathfindType;
+        public PathfindingUtilities.PathfindType PathfindType;
         public List<Tile> ProcessedTiles;
         public List<TileGameplay> ToSearch;
     }
@@ -29,7 +29,7 @@ public static class Pathfinder
         m_AStarvalues.Clear();
     }
 
-    public static List<TileGameplay> Automatic(TileGameplay startTile, TileGameplay targetNode, SO_Entity.ePathfindType pathfindType, GridManager gridManager) {
+    public static List<TileGameplay> Automatic(TileGameplay startTile, TileGameplay targetNode, PathfindingUtilities.PathfindType pathfindType, GridManager gridManager) {
 
         if (startTile == null) {
             return null;
@@ -122,7 +122,7 @@ public static class Pathfinder
         }
 
         HashSet<Tile> neighbors = new();
-        if (data.PathfindType == SO_Entity.ePathfindType.Car) {
+        if (data.PathfindType == PathfindingUtilities.PathfindType.Car) {
             if (currentNode is TileRoad road == true) {
                 for (int i = 0; i < road.Connections.OutConnections.Length; i++) {
                     if (road.Connections.OutConnections[i] == false) {

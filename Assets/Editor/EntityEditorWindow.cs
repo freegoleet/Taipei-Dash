@@ -80,9 +80,9 @@ public class EntityEditorWindow : EditorWindow
 
             TilemapEditor.NewTileHovered(tile, nodebase.GridPosition);
 
-            if (Editor.SelectedTile != null) {
+            if (Editor.SelectedStartTile != null) {
                 if(TilemapEditor.HoveredTile is TileGameplay tilegp) {
-                    Editor.SetTargetTile(tilegp);
+                    Editor.ShowPathToHoveredTile(tilegp);
                 }
             }
 
@@ -91,8 +91,14 @@ public class EntityEditorWindow : EditorWindow
         if (Event.current.type == EventType.MouseDown) {
             if (Event.current.keyCode == KeyCode.Mouse0) {
                 if (TilemapEditor.HoveredTile != null) {
-                    if (TilemapEditor.HoveredTile is TileGameplay tilegp)
-                        Editor.SelectTile(tilegp);
+                    if (TilemapEditor.HoveredTile is TileGameplay tilegp == false) {
+                        return;
+                    }
+                    if (Editor.SelectedStartTile != null) {
+                        Editor.SelectTargetTile(tilegp);
+                        return;
+                    }
+                    Editor.SelectStartTile(tilegp);
                     return;
                 }
             }

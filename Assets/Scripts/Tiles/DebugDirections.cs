@@ -17,7 +17,6 @@ public class DebugDirections : MonoBehaviour
     public DebugDirection FromLeft { get => m_FromLeft; }
     public DebugDirection FromRight { get => m_FromRight; }
 
-
     public void ToggleShowDebugDirections(bool show) {
         FromUp.gameObject.SetActive(show);
         FromDown.gameObject.SetActive(show);
@@ -40,8 +39,7 @@ public class DebugDirections : MonoBehaviour
 
         Direction newdir = TrafficUtilities.NormalizeRotation(from, to);
         switch (from) {
-            case Direction.Up:
-                FromUp.ToggleDirection(newdir, show);
+            case Direction.Up:                FromUp.ToggleDirection(newdir, show);
                 break;
             case Direction.Right:
                 FromRight.ToggleDirection(newdir, show);

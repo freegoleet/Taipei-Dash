@@ -1,4 +1,4 @@
-using System;
+using NUnit.Framework;
 using UnityEngine;
 
 namespace Traffic
@@ -41,8 +41,44 @@ namespace Traffic
         Pointer
     }
 
+    public enum ToggleType
+    {
+        Add,
+        Remove,
+        Toggle
+    }
+
     public static class TrafficUtilities
     {
+        public static Vector2Int GetVector2IntPosFromIntPos(int pos, int cols) {
+            int row = pos / cols;
+            int col = pos % cols;
+            return new Vector2Int(row, col);
+        }
+
+        public static int GetIntPosFromVector2IntPos(Vector2Int pos, int cols) {
+            // x = 7, y = 6, cols = 10
+            int result = pos.x * cols;
+            result += pos.y;
+            return result;
+        }
+
+        public static Direction GetDirectionFromPosToPos(Vector2Int from, Vector2Int to) {
+            if (from.x < to.x) {
+                return Direction.Right;
+            }
+            if (from.x > to.x) {
+                return Direction.Left;
+            }
+            if(from.y > to.y) {
+                return Direction.Down;
+            }
+            if (from.y < to.y) {
+                return Direction.Up;
+            }
+            return Direction.None;
+        }
+
         /// <summary>
         /// Reverse the direction of the input Direction.
         /// </summary>
@@ -131,7 +167,7 @@ namespace Traffic
         }
 
         public static Direction NormalizeRotation(Direction from, Direction to) {
-            if(from == to) {
+            if (from == to) {
                 return Direction.None;
             }
             if (ReverseDirections(from) == to) {
@@ -161,13 +197,13 @@ namespace Traffic
             if (from == ReverseDirections(to)) {
                 return Direction.Down;
             }
-            if(from == to) {
+            if (from == to) {
                 return Direction.Up;
             }
 
             switch (from) {
                 case Direction.Up:
-                    if(to == Direction.Left) {
+                    if (to == Direction.Left) {
                         return Direction.Left;
                     }
                     return Direction.Right;
@@ -190,7 +226,6 @@ namespace Traffic
 
             return Direction.None;
         }
-
 
         public static bool IsDirectionAdjacent(Direction start, Direction target) {
             int index = start - target;
@@ -235,6 +270,30 @@ namespace Traffic
             }
             return directions;
         }
+
+        public static Vector3 GetDirectionAsQuaternion(Direction direction) {
+            float angle = 0;
+            switch (direction) {
+                case Direction.Up:
+                    angle = 0;
+                    break;
+                case Direction.Down:
+                    angle = 180;
+                    break;
+                case Direction.Left:
+                    angle = 90;
+                    break;
+                case Direction.Right:
+                    angle = 270;
+                    break;
+            }
+            return new Vector3(0, 0, angle);
+        }
+
+        //public static List<Vector2> GetPointsAlongCurve(Vector2Int start, Vector2Int end, int points) {
+
+        //}
+
 
         public static Texture2D AddWatermark(Texture2D background, Texture2D watermark, int startPositionX, int startPositionY) {
             //only read and rewrite the area of the watermark

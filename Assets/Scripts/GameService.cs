@@ -37,11 +37,10 @@ public class GameService : MonoBehaviour
             return;
         }
         m_Instance = this;
+        Initialized = true;
     }
 
     private void Awake() {
-        DontDestroyOnLoad(this);
-
         Initialize();
     }
 
@@ -71,5 +70,16 @@ public class GameService : MonoBehaviour
 
     public void RemoveTrafficLight(TrafficLight trafficLight) {
         TrafficLights.Remove(trafficLight);
+    }
+
+    public TileManager GetTileManager() {
+        if(GridManager.TileManager == null) {
+            GridManager.SetupManager();
+        }
+        return GridManager.TileManager;
+    }
+
+    public void Refresh() {
+        TrafficLights.Clear();
     }
 }

@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4c5c28f20fa0a0c4f887c47ca16fa364, type: 3}
+  m_Name: Car Data
+  m_EditorClassIdentifier: 
+  m_CarPrefab: {fileID: 926721756361710887, guid: 2f9c7efee75cb6046b47117763dcaffc, type: 3}
+  m_AvailableColors:
+  - {r: 0.735849, g: 0.19020998, b: 0.19020998, a: 1}
+  - {r: 0.6320754, g: 0.6320754, b: 0.6320754, a: 1}
+  - {r: 0.9150943, g: 0.9150943, b: 0.9150943, a: 1}
+  - {r: 0.23754002, g: 0.31372696, b: 0.8018868, a: 1}
+  - {r: 0.22919185, g: 0.5471698, b: 0.3676537, a: 1}
+  m_SpeedRange: 0.2
+  m_LawbreakingCoef: 0.1
+  m_AccelerationCoef: 0.5
+  m_CarBodies:
+  - {fileID: 11400000, guid: bee6816a59e80cd42b76c72ea64c8b51, type: 2}

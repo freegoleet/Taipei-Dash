@@ -25,9 +25,7 @@ public class GameplayTileManager<T> where T : Tile
 
     public List<T> AddTiles() {
         void AddNewTile(T tile) {
-            Debug.Log("added tile " + typeof(T));
             tile.Initialize(tile.Data, tile.GridPosition);
-            //tile.NeighborSystem = new(tile);
             TilesByGridpos.Add(tile.GridPosition, tile);
             TileManager.AllTilesByGridpos.Add(tile.GridPosition, tile);
             TileManager.GameplayTileCount++;

@@ -13,7 +13,7 @@ public class GridManagerEditor : Editor
         }
 
         if (GUILayout.Button("Create Grid")) {
-            gm.GenerateMap();
+            gm.GenerateMap(gm.Rows, gm.Cols);
         }
 
         if (GUILayout.Button("Destroy Grid")) {

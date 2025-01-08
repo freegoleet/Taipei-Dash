@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Traffic;
 using UnityEngine;
 
@@ -60,7 +59,7 @@ public class GridManager : MonoBehaviour
             Camera.main.transform.position.y - (Rows * TileSize) * 0.5f + TileSize * 0.5f);
     }
 
-    public void GenerateMap() {
+    public void GenerateMap(int rows, int cols) {
         Tile tile = null;
         SO_Tile tileData = null;
         int currentTile = 0;
@@ -68,10 +67,10 @@ public class GridManager : MonoBehaviour
 
         transform.position = GetGridCameraOffset();
         m_GridData = new GridData();
-        m_MaxTileCount = Rows * Cols;
+        m_MaxTileCount = rows * cols;
         m_GridData.Tiles = new int[m_MaxTileCount];
-        m_GridData.Rows = Rows;
-        m_GridData.Cols = Cols;
+        m_GridData.Rows = rows;
+        m_GridData.Cols = cols;
 
         m_CurrentWallIndexes.Clear();
         TileManager.Reset();
@@ -115,7 +114,7 @@ public class GridManager : MonoBehaviour
         }
 
         for (int i = 0; i < TileManager.GameplayTileCount; i++) {
-            TileManager.SetupTileNeighbors(TileManager.GetAllGameplayTiles()[i], false);
+            TileManager.FitTileWithNeighbors(TileManager.GetAllGameplayTiles()[i]);
         }
 
         #region othertiles
@@ -149,42 +148,12 @@ public class GridManager : MonoBehaviour
             if (neighbors[i] == null) {
                 continue;
             }
-            if (tile.GridPosition == new Vector2Int(0,0)) {
-                Debug.Log("hi");
-            }
             Tile neighboringTile = (Tile)neighbors[i];
 
             tile.NeighborSystem.SetNeighborTile(((Direction)i, Direction.None), neighboringTile);
             if (setNeighborsNewNeighbor == true) {
                 neighboringTile.NeighborSystem.SetNeighborTile((TrafficUtilities.ReverseDirections((Direction)i), Direction.None), tile);
             }
-
-            //switch (i) {
-            //    case 0: // Up
-            //        tile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.None), neighboringTile);
-            //        if(setNeighborsNewNeighbor == true) {
-            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.None), tile);
-            //        }
-            //        break;
-            //    case 1: // Down
-            //        tile.NeighborSystem.SetNeighborTile((Direction.Down, Direction.None), neighboringTile);
-            //        if (setNeighborsNewNeighbor == true) {
-            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Up, Direction.None), tile);
-            //        }
-            //        break;
-            //    case 2: // Left
-            //        tile.NeighborSystem.SetNeighborTile((Direction.Left, Direction.None), neighboringTile);
-            //        if (setNeighborsNewNeighbor == true) {
-            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Right, Direction.None), tile);
-            //        }
-            //        break;
-            //    case 3: // Right
-            //        tile.NeighborSystem.SetNeighborTile((Direction.Right, Direction.None), neighboringTile);
-            //        if (setNeighborsNewNeighbor == true) {
-            //            neighboringTile.NeighborSystem.SetNeighborTile((Direction.Left, Direction.None), tile);
-            //        }
-            //        break;
-            //}
         }
         
         neighbors = GetDiagonalNeighbors(tile);

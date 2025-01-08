@@ -18,7 +18,7 @@ namespace Traffic
         private Dictionary<Direction, RawImage> m_Images = null;
 
         public void Initialize() {
-            m_Images = new Dictionary<Direction, RawImage>() {
+            m_Images = new Dictionary<Direction, RawImage>() {  
             { Direction.Up,  m_Up },
             { Direction.Left,  m_Left },
             { Direction.Right, m_Right },

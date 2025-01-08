@@ -63,12 +63,19 @@ public class TileManager
         Vector2Int gridpos = oldTile.GridPosition;
         int siblingIndex = oldTile.transform.GetSiblingIndex();
         ReturnTile(oldTile);
+
         Tile newTile = GetNewTile(newTileType, gridpos, siblingIndex);
+        newTile.Initialize(GridManager.TileList.GetSOByType(newTileType), gridpos);
+        GridManager.SetNeighbors(newTile, true);
         return newTile;
     }
 
     public Tile GetTileByPos(Vector2Int gridPos) {
         return AllTilesByGridpos[gridPos];
+    }
+
+    public Tile GetTileByPos(int pos) {
+        return AllTilesByGridpos[TrafficUtilities.GetVector2IntPosFromIntPos(pos, GridManager.Cols)];
     }
 
     public Tile GetNewTile(TileType tileType, Vector2Int pos, int index = -1) {
@@ -136,39 +143,40 @@ public class TileManager
         for (int i = 0; i < AllTiles.Length; i++) {
             Tile t = AllTiles[i];
             GridManager.SetNeighbors(t);
-            SetTileNeighbors(t.NeighborSystem);
+            GetTileNeighbors(t.NeighborSystem);
         }
     }
 
-    public HashSet<NeighborSystem> SetupTileNeighbors(Tile tile, bool original) {
-        HashSet<NeighborSystem> tiles = SetTileNeighbors(tile.NeighborSystem);
-        HashSet<NeighborSystem> newList = new();
-
-        if (original == false) {
-            return tiles;
+    public HashSet<NeighborSystem> FitTileWithNeighbors(Tile tile, HashSet<TileType> excludedTypes = null) {
+        HashSet<NeighborSystem> tiles = new HashSet<NeighborSystem> { };
+        if (excludedTypes != null ? !excludedTypes.Contains(tile.TileType) : false) {
+            tiles.Add(tile.NeighborSystem);
         }
 
-        foreach (NeighborSystem tileAutofit in tiles) {
-            if (original == true) {
-                newList.UnionWith(SetupTileNeighbors(tileAutofit.Tile, false));
+        foreach (KeyValuePair<(Direction, Direction), Neighbor> pair in tile.NeighborSystem.GetAllNeighbors()) {
+            if (pair.Value.Tile == null) {
+                continue;
             }
+            if (excludedTypes != null ? excludedTypes.Contains(pair.Value.Tile.TileType) : false) {
+                continue;
+            }
+
+            tiles.Add(pair.Value.Tile.NeighborSystem);
         }
 
-        newList = newList.GroupBy(x => x.Tile.GridPosition).Select(something => something.First()).ToHashSet();
-
-        foreach (NeighborSystem neighbor in newList) {
-            if(neighbor.Tile is TileAutofit taf) {
+        foreach (NeighborSystem neighbor in tiles) {
+            if (neighbor.Tile is TileAutofit taf) {
                 FitTile(taf);
             }
-            else if(neighbor.Tile is TileRoad tr) {
+            else if (neighbor.Tile is TileRoad tr) {
                 FitTile(tr);
             }
         }
 
-        return newList;
+        return tiles;
     }
 
-    private HashSet<NeighborSystem> SetTileNeighbors(NeighborSystem tile) {
+    private HashSet<NeighborSystem> GetTileNeighbors(NeighborSystem tile) {
         HashSet<NeighborSystem> neighbors = new HashSet<NeighborSystem> {
             tile
         };
@@ -177,16 +185,7 @@ public class TileManager
             if (pair.Value.Tile == null) {
                 continue;
             }
-
-            bool fittable = pair.Value.Tile.TileType == TileType.Road ? false : true;
-            if (tile.Tile.TileType == TileType.Road) {
-                fittable = !fittable;
-            }
-
-            tile.GetNeighbor(pair.Key).Fittable = fittable;
-
             neighbors.Add(tile.GetNeighborTile(pair.Key).NeighborSystem);
-            tile.GetNeighborTile(pair.Key).NeighborSystem.GetNeighbor(TrafficUtilities.ReverseDirections(pair.Key)).Fittable = fittable;
         }
 
         return neighbors;
@@ -228,6 +227,73 @@ public class TileManager
             tile.SetFacing(tile.NeighborSystem.GetFirstFittableDirection());
             tile.SetAutofitType(AutofitType.DeadEnd);
             return;
+        }
+    }
+
+    public void SetTilesFromLevelData(LevelData levelData) {
+        GridManager.GenerateMap(levelData.Rows, levelData.Columns);
+
+        for (int i = 0; i < levelData.Roads.Length; i++) {
+            TileRoadData data = levelData.Roads[i];
+            TileRoad tile = (TileRoad)ReplaceTile(GetTileByPos(
+                TrafficUtilities.GetVector2IntPosFromIntPos(data.Position, GridManager.Cols)), TileType.Road);
+            tile.SetFacing(data.Facing);
+            tile.SetAllConnections(data.Connections);
+            tile.ToggleShowConnections(false);
+            foreach (var line in levelData.Roads[i].ManualLines) {
+                switch (line.Value) {
+                    case LineType.LaneSeparatorWhole:
+                        break;
+                    case LineType.LaneSeparatorDotted:
+                        break;
+                    case LineType.DirectionSeparatorWhole:
+                        break;
+                    case LineType.DirectionSeparatorDotted:
+                        break;
+                    case LineType.Stop:
+                        RoadUtils.ToggleStopline(tile, ToggleType.Add, true);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+
+        HashSet<TileType> excludes = new HashSet<TileType>() { TileType.Road };
+
+        for (int i = 0; i < RoadTileManager.TileCount; i++) {
+            FitTileWithNeighbors(RoadTileManager.Tiles[i], excludes);
+            RoadUtils.SetLines(RoadTileManager.Tiles[i]);
+        }
+
+        if(levelData.Crosswalks != null) {
+            for (int i = 0; i < levelData.Crosswalks.Length; i++) {
+                RoadUtils.ToggleCrosswalk((TileRoad)GetTileByPos(levelData.Crosswalks[i]), true);
+            }
+        }
+
+        if(levelData.TrafficLights != null) {
+            for (int i = 0; i < levelData.TrafficLights.Length; i++) {
+                TileRoad tr = (TileRoad)GetTileByPos(levelData.TrafficLights[i].Position);
+                TrafficLight tl = RoadUtils.ToggleTrafficLight(tr);
+                tl.GreenDuration = levelData.TrafficLights[i].GreenDuration;
+                tl.YellowDuration = levelData.TrafficLights[i].YellowDuration;
+                tl.RedDuration = levelData.TrafficLights[i].RedDuration;
+                TrafficLightData data = levelData.TrafficLights[i];
+
+                for (int j = 0; j < levelData.TrafficLights[i].SyncedLightsPos.Length; j++) {
+                    TileRoad tileRoad = (TileRoad)GetTileByPos(data.SyncedLightsPos[j]);
+                    RoadUtils.ToggleTrafficLight(tileRoad);
+                    tl.SyncNew(tileRoad.TrafficLight);
+                }
+
+                for (int j = 0; j < levelData.TrafficLights[i].ReverseSyncedLightPos.Length; j++) {
+                    TileRoad tileRoad = (TileRoad)GetTileByPos(data.ReverseSyncedLightPos[j]);
+                    RoadUtils.ToggleTrafficLight(tileRoad);
+                    tl.UnsyncNew(tileRoad.TrafficLight);
+                }
+                tl.SyncTimers();
+            }
         }
     }
 }

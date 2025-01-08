@@ -26,6 +26,10 @@ namespace Traffic
             return Neighbors[direction];
         }
 
+        public Neighbor GetNeighbor(Direction direction) {
+            return Neighbors[(direction, Direction.None)];
+        }
+
         public Dictionary<(Direction, Direction), Neighbor> GetAllNeighbors() {
             return Neighbors;
         }
@@ -33,9 +37,13 @@ namespace Traffic
         public Tile GetNeighborTile((Direction, Direction) direction) {
             return Neighbors[direction].Tile;
         }
+        public Tile GetNeighborTile(Direction direction) {
+            return Neighbors[(direction, Direction.None)].Tile;
+        }
 
         public void SetNeighborTile((Direction, Direction) direction, Tile tile) {
             Neighbors[direction].Tile = tile;
+            Neighbors[direction].Fittable = tile.TileType == Tile.TileType ? true : false;
         }
 
         public HashSet<Tile> GetAllAdjacentNeighbors() {

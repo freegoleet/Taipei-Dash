@@ -21,10 +21,10 @@ namespace Traffic
         [SerializeField]
         private float m_RedDuration = 10f;
 
-        public TileRoad Road { get; private set; } = null;
+        public TileRoad Tile { get; private set; } = null;
         private List<TileRoad> RoadsAffected { get; set; } = new();
         public HashSet<TrafficLight> SyncedLights { get; private set; } = new();
-        public HashSet<TrafficLight> SyncedReverseLights { get; private set; } = new();
+        public HashSet<TrafficLight> UnsyncedLights { get; private set; } = new();
         public float GreenDuration { get => m_GreenDuration; set => m_GreenDuration = value; }
         public float YellowDuration { get => m_YellowDuration; set => m_YellowDuration = value; }
         public float RedDuration { get => m_RedDuration; set => m_RedDuration = value; }
@@ -56,14 +56,13 @@ namespace Traffic
                 { TrafficLightColor.Red, RedDuration },
             };
 
-            Road = tileRoad;
-            SetFacing(Road.Facing);
+            Tile = tileRoad;
+            SetFacing(Tile.Facing);
             GameService.Instance.AddTrafficLight(this);
         }
 
         public void Tick(float dt) {
             m_Timer += dt;
-            Debug.Log("tick");
             if (m_Timer >= m_ColorsAndTimes[CurrentColor]) {
                 m_Timer = 0f;
                 NextColor();
@@ -85,6 +84,10 @@ namespace Traffic
         }
 
         private void NextColor() {
+            SetColor(GetNextColor(CurrentColor));
+        }
+
+        private void SetColor(TrafficLightColor color) {
             switch (CurrentColor) {
                 case TrafficLightColor.Red:
                     m_RedLight.SetActive(false);
@@ -97,7 +100,7 @@ namespace Traffic
                     break;
             }
 
-            CurrentColor = GetNextColor(CurrentColor);
+            CurrentColor = color;
 
             switch (CurrentColor) {
                 case TrafficLightColor.Red:
@@ -112,6 +115,8 @@ namespace Traffic
                     SetRoadsDrivability(true);
                     break;
             }
+
+
         }
 
         public void SetFacing(Direction direction) {
@@ -132,24 +137,45 @@ namespace Traffic
         }
 
         public void SyncNew(TrafficLight trafficLight) {
+            if(trafficLight == null) {
+                return;
+            }
+            if (SyncedLights.Contains(trafficLight)) {
+                return;
+            }
+            if (trafficLight == this) {
+                return;
+            }
+            foreach (var light in SyncedLights) {
+                trafficLight.SyncNew(light);
+            }
             SyncedLights.Add(trafficLight);
-            trafficLight.SyncedLights.Add(this);
+            trafficLight.SyncNew(this);
         }
 
-        public void SyncNewReverse(TrafficLight trafficLight) {
-            SyncedReverseLights.Add(trafficLight);
-            trafficLight.SyncedReverseLights.Add(this);
+        public void UnsyncNew(TrafficLight trafficLight) {
+            if (trafficLight == null) {
+                return;
+            }
+            if (UnsyncedLights.Contains(trafficLight)) {
+                return;
+            }
+            if (trafficLight == this) {
+                return;
+            }
+            UnsyncedLights.Add(trafficLight);
+            trafficLight.UnsyncNew(this);
         }
 
-        public void UnSyncTrafficLight() {
+        public void RemoveTimedTrafficLight() {
             foreach (TrafficLight light in SyncedLights) {
                 light.SyncedLights.Remove(this);
                 SyncedLights.Remove(light);
             }
 
-            foreach (TrafficLight light in SyncedReverseLights) {
-                light.SyncedReverseLights.Remove(this);
-                SyncedReverseLights.Remove(light);
+            foreach (TrafficLight light in UnsyncedLights) {
+                light.UnsyncedLights.Remove(this);
+                UnsyncedLights.Remove(light);
             }
         }
 
@@ -160,7 +186,7 @@ namespace Traffic
                 light.RedDuration = RedDuration;
                 light.SetLight(CurrentColor, m_Timer);
             }
-            foreach (var light in SyncedReverseLights) {
+            foreach (var light in UnsyncedLights) {
                 light.GreenDuration = RedDuration;
                 light.YellowDuration = YellowDuration;
                 light.RedDuration = GreenDuration;
@@ -179,13 +205,12 @@ namespace Traffic
         }
 
         public void SetLight(TrafficLightColor color, float timeProgressed) {
-            CurrentColor = color;
+            SetColor(color);
             if (timeProgressed > m_ColorsAndTimes[color]) {
                 float newTime = timeProgressed - m_ColorsAndTimes[color];
                 SetLight(GetNextColor(CurrentColor), newTime);
                 return;
             }
-
             m_Timer = timeProgressed;
         }
 
@@ -203,12 +228,12 @@ namespace Traffic
 
         private void SetRoadsDrivability(bool drivable) {
             foreach (TileRoad road in RoadsAffected) {
-                road.GreenLit = drivable;
+                road.Passable[Tile.Facing] = drivable;
             }
         }
 
         private void OnDestroy() {
-            UnSyncTrafficLight();
+            RemoveTimedTrafficLight();
         }
     }
 

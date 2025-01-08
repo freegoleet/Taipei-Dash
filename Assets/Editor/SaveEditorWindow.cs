@@ -57,7 +57,8 @@ public class SaveEditorWindow : EditorWindow
 
     public void Levels() {
         if (Editor.LevelNames.Length > 0) {
-            m_SelectedLevelIndex = GUILayout.SelectionGrid(m_SelectedLevelIndex, Editor.LevelNames, 4, GUILayout.Width(400));
+            m_SelectedLevelIndex = GUILayout.SelectionGrid(m_SelectedLevelIndex, Editor.LevelNames, 3, GUILayout.Width(300));
+            
         }
     }
 }

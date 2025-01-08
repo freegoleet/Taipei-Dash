@@ -37,3 +37,5 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 4b89bf27ca98ecc4787dddde530046a4, type: 2}
   - {fileID: 11400000, guid: ffecdac3ac8a049439b5a3342db1705b, type: 2}
   - {fileID: 11400000, guid: f0eee7503a494794491454b0d04c4a38, type: 2}
+  m_SOTileRoad: {fileID: 11400000, guid: cbcad56de67a0ad4aa2829f1dd5e4276, type: 2}
+  m_SOTileSidewalk: {fileID: 11400000, guid: 1519cd63f0373814f805c12a95b85048, type: 2}

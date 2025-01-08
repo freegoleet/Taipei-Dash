@@ -44,11 +44,18 @@ public class TileRoad : TileGameplay
 
     public bool HasCrosswalk { get; set; } = false;
     public bool HasStopLine { get; set; } = false;
+    public bool HasTrafficLight { get; set; } = false;
     public int ConnectionIndex { get; set; } = 0;
     public TrafficLight TrafficLight { get; private set; } = null;
     public RoadtileNeighbors RoadtileNeighbors { get; private set; } = null;
     public Connections Connections { get; private set; } = new Connections(4);
-    public bool GreenLit { get; set; } = true;
+    public Dictionary<Direction, bool> Passable { get; set; } = new Dictionary<Direction, bool>() {
+        { Direction.Up, true },
+        { Direction.Down, true },
+        { Direction.Left, true },
+        { Direction.Right, true },
+    };
+    public Dictionary<Direction, LineType> ManualLines { get; set; } = new Dictionary<Direction, LineType>();
 
     private Dictionary<Direction, bool> Lines { get; set; } = null;
 
@@ -142,7 +149,7 @@ public class TileRoad : TileGameplay
         return hasLine;
     }
 
-    public void SetLineType(Direction dir, SO_RoadLine line) {
+    public void SetLineType(Direction dir, SO_RoadLine line, bool manual = false) {
         SpriteRenderer renderer = null;
 
         switch (dir) {
@@ -162,9 +169,21 @@ public class TileRoad : TileGameplay
 
         renderer.sprite = line.Sprite;
         renderer.color = line.Color;
+
+        if(manual == true) {
+            ManualLines.TryAdd(dir, line.LineType);
+        }
+        else {
+            ManualLines.Remove(dir);
+        }
+
+        ToggleLine(dir, true, manual);
     }
 
-    public void ToggleLine(Direction dir, bool show) {
+    public void ToggleLine(Direction dir, bool show, bool manual = false) {
+        if(manual == false && ManualLines.ContainsKey(dir)) {
+            return;
+        }
         if (HasCrosswalk == true && show == true) {
             return;
         }
@@ -220,26 +239,42 @@ public class TileRoad : TileGameplay
         UpdateDebugDirections();
     }
 
+    public void SetAllConnections(Connections connections) {
+        Connections = connections;
+        UpdateDebugDirections();
+    }
+
     public void UpdateDebugDirections() {
         for (int i = 0; i < Connections.InConnections.Length; i++) {
+            bool inDir = true;
+            if (Connections.InConnections[i] == false) {
+                inDir = false;
+            }
             for (int j = 0; j < Connections.OutConnections.Length; j++) {
-                if ((Direction)i == (Direction)j) {
+                if (inDir == false) {
+                    DebugDirections.ToggleDebugDirection((Direction)i, (Direction)j, inDir);
                     continue;
                 }
-                bool showDir = false;
-                if (Connections.InConnections[i] == Connections.OutConnections[j]) {
-                    showDir = true;
+                bool outDir = true;
+                if (i == j) {
+                    outDir = false;
                 }
-                DebugDirections.ToggleDebugDirection((Direction)i, (Direction)j, showDir);
+                if (Connections.OutConnections[j] == false) {
+                    outDir = false;
+                }
+                bool final = outDir == true && inDir == true ? true : false;
+                DebugDirections.ToggleDebugDirection((Direction)i, (Direction)j, final);
             }
         }
     }
 
     public void AddToTrafficLight(TrafficLight trafficLight) {
         TrafficLight = trafficLight;
+        TrafficLight.AddRoad(this);
     }
 
     public void RemoveFromTrafficLight() {
+        TrafficLight.RemoveRoad(this);
         TrafficLight = null;
     }
 
