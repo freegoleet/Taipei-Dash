@@ -9,3 +9,9 @@ Taipei Dash is going to be a 2D-Grid based traffic simulation game where the pla
 * Traffic lights and crosswalks.
 * Pathfinding works separately both for Pedestrians and Cars.
 * Cars can utilize a smooth turn curve.
+* Save System that saves level data to Json.
+  * Load System that loads the level data and sets up the level in the editor.
+
+### Scripts ###
+All Relevant scripts can be found under #### Assets > Scripts #### .
+Naming conventions may be inconsistent since they have been improved and changed with time.
